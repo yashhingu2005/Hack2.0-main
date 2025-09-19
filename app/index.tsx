@@ -108,22 +108,7 @@ export default function LandingScreen() {
             colors={['#2563EB', '#1D4ED8']}
             style={styles.buttonGradient}>
             <UserCheck color="#FFFFFF" size={28} />
-            <Text style={styles.buttonText}>Continue as Doctor</Text>
-            <Text style={styles.buttonSubtext}>Professional Dashboard</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.patientButton]}
-          onPress={() => router.push('/login?role=patient')}>
-          <LinearGradient
-            colors={['#10B981', '#059669']}
-            style={styles.buttonGradient}>
-
-              
-            <Heart color="#FFFFFF" size={28} />
-            <Text style={styles.buttonText}>Continue as Patient</Text>
-            <Text style={styles.buttonSubtext}>Personal Health Hub</Text>
+            <Text style={styles.buttonText}>Join JeevanSetu</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
