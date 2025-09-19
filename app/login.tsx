@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -26,6 +27,8 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
+
+  const { width, height } = useWindowDimensions();
 
   const handleLogin = async () => {
     if (!email || !password || (isSignup && !name)) {
@@ -51,7 +54,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -60,39 +63,50 @@ export default function LoginScreen() {
         <View style={styles.bubblesContainer}>
           <LinearGradient
             colors={['#00B3FF', '#5603BD']}
-            style={[styles.bubble, styles.bubbleTopLeft]}
+            style={[styles.bubble, {
+              width: width * 0.7,
+              height: width * 0.7,
+              top: -height * 0.12,
+              left: -width * 0.2,
+            }]}
           />
           <LinearGradient
             colors={['#00B3FF', '#5603BD']}
-            style={[styles.bubble, styles.bubbleBottomRight]}
+            style={[styles.bubble, {
+              width: width * 0.5,
+              height: width * 0.5,
+              bottom: -height * 0.15,
+              right: -width * 0.2,
+            }]}
           />
           <LinearGradient
             colors={['#00B3FF', '#5603BD']}
-            style={[styles.smallBubble, styles.smallBubbleTop]}
+            style={[styles.smallBubble, {
+              top: height * 0.15,
+              right: width * 0.1,
+            }]}
           />
           <LinearGradient
             colors={['#00B3FF', '#5603BD']}
-            style={[styles.smallBubble, styles.smallBubbleBottom]}
+            style={[styles.smallBubble, {
+              bottom: height * 0.25,
+              left: width * 0.1,
+            }]}
           />
         </View>
 
         {/* Top Section */}
-        <View style={styles.topSection}>
+        <View style={[styles.topSection, { paddingTop: height * 0.05 }]}>
           <View style={styles.illustrationContainer}>
-            <Stethoscope size={120} color="#666" strokeWidth={1.5} />
-            <View style={styles.decorativeElements}>
-              <View style={[styles.dot, { top: 20, left: 30 }]} />
-              <View style={[styles.dot, { top: 60, right: 40 }]} />
-              <View style={[styles.dot, { bottom: 40, left: 20 }]} />
-              <View style={[styles.smallDot, { top: 80, left: 60 }]} />
-              <View style={[styles.smallDot, { bottom: 20, right: 30 }]} />
-            </View>
+            <Stethoscope size={width * 0.28} color="#666" strokeWidth={1.5} />
           </View>
-          <Text style={styles.title}>Sign In</Text>
+          <Text style={[styles.title, { fontSize: width * 0.08 }]}>
+            {isSignup ? 'Sign Up' : 'Sign In'}
+          </Text>
         </View>
 
         {/* Form Section */}
-        <View style={styles.formSection}>
+        <View style={[styles.formSection, { paddingHorizontal: width * 0.08 }]}>
           {isSignup && (
             <View style={styles.inputContainer}>
               <TextInput
@@ -144,28 +158,29 @@ export default function LoginScreen() {
               colors={['#00B3FF', '#5603BD']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.signInButton}
+              style={[
+                styles.signInButton,
+                { width: width * 0.5, paddingVertical: height * 0.018 },
+              ]}
             >
-              <Text style={styles.signInButtonText}>Sign In</Text>
+              <Text style={[styles.signInButtonText, { fontSize: width * 0.045 }]}>
+                {isSignup ? 'Sign Up' : 'Sign In'}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
           {/* Divider */}
           <View style={styles.divider}>
             <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
+            <Text style={[styles.dividerText, { fontSize: width * 0.035 }]}>OR</Text>
             <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
           </View>
 
-
           {/* Secondary Button */}
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/signup')}
-          >
+          <TouchableOpacity style={styles.secondaryButton}>
             <MaskedView
               maskElement={
-                <Text style={styles.secondaryButtonText}>
+                <Text style={[styles.secondaryButtonText, { fontSize: width * 0.04 }]}>
                   {isSignup
                     ? 'Already have an account? Sign In'
                     : "Don't have an account? Sign Up"}
@@ -187,19 +202,12 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#f8f9fa' },
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-
-  bubblesContainer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    zIndex: 0,
-  },
+  bubblesContainer: { position: 'absolute', width: '100%', height: '100%', zIndex: 0 },
   bubble: {
     position: 'absolute',
     borderRadius: 200,
-    // Add to your existing bubble styles
     shadowColor: '#949ca0ff',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -208,48 +216,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  bubbleTopLeft: {
-    width: 350,
-    height: 350,
-    top: -90,
-    left: -90,
-  },
-  bubbleBottomRight: {
-    width: 250,
-    height: 250,
-    bottom: -110,
-    right: -110,
-  },
   smallBubble: {
     position: 'absolute',
     borderRadius: 100,
     width: 100,
     height: 100,
   },
-  smallBubbleTop: { top: 120, right: 30 },
-  smallBubbleBottom: { bottom: 180, left: 40 },
-
-  topSection: {
-    flex: 0.4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 40,
-    zIndex: 1,
-  },
-  illustrationContainer: { position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
-  decorativeElements: { position: 'absolute', width: 200, height: 200 },
-  dot: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#ddd' },
-  smallDot: { position: 'absolute', width: 4, height: 4, borderRadius: 2, backgroundColor: '#ddd' },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#333', textAlign: 'center' },
-
-  formSection: {
-    flex: 1,
-    paddingHorizontal: 32,
-    justifyContent: 'center',
-    transform: [{ translateY: -60 }],
-    zIndex: 1
-  },
-
+  topSection: { flex: 0.35, alignItems: 'center', justifyContent: 'center' },
+  illustrationContainer: { marginBottom: 20 },
+  title: { fontWeight: 'bold', color: '#333', textAlign: 'center' },
+  formSection: { flex: 1, justifyContent: 'center' },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -266,42 +242,16 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 16, color: '#333', outlineWidth: 0 },
   eyeIcon: { padding: 4, marginLeft: 10 },
-
   signInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     borderRadius: 25,
-    width: '20%',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
     alignSelf: 'center',
-  },
-  signInButtonText: { fontSize: 18, fontWeight: '600', color: '#fff', textAlign: 'center' },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 32,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    // Apply LinearGradient in component for gradient effect
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#9CA3AF', // replace with gradient via MaskedView if needed
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  secondaryButton: {
-    paddingVertical: 16,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000', // replace with gradient if needed
-  },
-  signUpText: { fontSize: 14, color: '#000', textAlign: 'center' },
+  signInButtonText: { fontWeight: '600', color: '#fff', textAlign: 'center' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24 },
+  dividerLine: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 16, color: '#9CA3AF', fontWeight: '500' },
+  secondaryButton: { paddingVertical: 12, alignItems: 'center' },
+  secondaryButtonText: { fontWeight: '500', color: '#000' },
 });

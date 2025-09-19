@@ -1,93 +1,124 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
-import { Home, FileText, UserCheck, MessageCircle, User } from 'lucide-react-native';
+import {
+  Home,
+  FileText,
+  MessageCircle,
+  SheetIcon,
+  TabletIcon,
+} from 'lucide-react-native';
+import { View } from 'react-native';
 
 export default function PatientLayout() {
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#64748B',
+      screenOptions={({ route }) => ({
+        headerShown: true,
+        tabBarActiveTintColor: '#5603BD', // active icon outline color
+        tabBarInactiveTintColor: '#64748B', // inactive icon outline color
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E2E8F0',
-          paddingTop: 8,
-          paddingBottom: 20, // Same as doctor layout
-          height: 92, // Same as doctor layout
+          height: 80,
+          borderRadius: 40,
+          left: 20,
+          right: 20,
+          bottom: 15,
+          shadowColor: '#000',
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 11, // Same as doctor layout
-          fontWeight: '500', // Same as doctor layout
-          marginTop: 4, // Same as doctor layout
-          marginBottom: 4, // Added margin below the label text
+          fontSize: 11,
+          fontWeight: '500',
+          marginBottom: 4,
         },
+        tabBarIcon: ({ color }) => {
+          let IconComponent;
+          switch (route.name) {
+            case 'today':
+              IconComponent = Home;
+              break;
+            case 'consultations':
+              IconComponent = FileText;
+              break;
+            case 'records':
+              IconComponent = SheetIcon;
+              break;
+            case 'pharmacy':
+              IconComponent = TabletIcon;
+              break;
+            default:
+              return null;
+          }
+          // ✅ No circular background — just change icon color
+          return <IconComponent color={color} size={26} />;
+        },
+      })}
+    >
+      <Tabs.Screen name="today" options={{ title: 'Today' }} />
+      <Tabs.Screen name="consultations" options={{ title: 'Consultations' }} />
 
-      }}>
-      <Tabs.Screen
-        name="today"
-        options={{
-          title: 'Today',
-          tabBarIcon: ({ color, size }) => (
-            <Home color={color} size={28} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="consultations"
-        options={{
-          title: 'Consultations',
-          tabBarIcon: ({ color, size }) => (
-            <FileText color={color} size={28} />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="assistant"
         options={{
           title: 'Sahayata',
-          tabBarIcon: ({ color, size }) => (
-            <MessageCircle color={color} size={28} />
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={{
+                top: -30, // floating effect
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.2,
+                shadowRadius: 6,
+                elevation: 8,
+                borderRadius: 40,
+                overflow: 'hidden',
+              }}
+            >
+              <LinearGradient
+                colors={
+                  focused
+                    ? ['#00B3FF', '#5603BD']
+                    : ['#9CA3AF', '#9CA3AF']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  width: 70,
+                  height: 70,
+                  borderRadius: 35,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <MessageCircle color="#fff" size={30} />
+              </LinearGradient>
+            </View>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="doctors"
-        options={{
-          title: 'Doctors',
-          tabBarIcon: ({ color, size }) => (
-            <UserCheck color={color} size={28} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          
-          
-        }}
-      />
-      <Tabs.Screen
-        name="sos"
-        options={{
-          href: null, // This hides the tab from the tab bar
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: '500',
+            textAlign: 'center',
+            marginTop: 36, // label below floating button
+          },
         }}
       />
 
+      <Tabs.Screen name="records" options={{ title: 'Records' }} />
+      <Tabs.Screen name="pharmacy" options={{ title: 'Pharmacy' }} />
 
-      <Tabs.Screen
-        name="onboarding"
-        options={{
-          href: null, // This hides the tab from the tab bar
-        }}
-      />
-      <Tabs.Screen
-        name="prescriptions"
-        options={{
-          href: null, // This hides the tab from the tab bar
-        }}
-      />
-      
+      {/* Hidden screens */}
+      <Tabs.Screen name="doctors" options={{ href: null }} />
+      <Tabs.Screen name="profile" options={{ href: null }} />
+      <Tabs.Screen name="sos" options={{ href: null }} />
+      <Tabs.Screen name="onboarding" options={{ href: null }} />
+      <Tabs.Screen name="prescriptions" options={{ href: null }} />
     </Tabs>
   );
 }
