@@ -13,20 +13,22 @@ import {
 import MaskedView from '@react-native-masked-view/masked-view';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowRight, Eye, EyeOff, Stethoscope } from 'lucide-react-native';
 import { AuthContext } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
   const { role } = useLocalSearchParams<{ role: string }>();
   const { login, checkPatientOnboarding, user } = useContext(AuthContext);
   const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email || !password || (isSignup && !name)) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -48,130 +50,136 @@ export default function LoginScreen() {
     }
   };
 
-  const isDoctorLogin = role === 'doctor';
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Gradient Bubbles */}
+        <View style={styles.bubblesContainer}>
+          <LinearGradient
+            colors={['#00B3FF', '#5603BD']}
+            style={[styles.bubble, styles.bubbleTopLeft]}
+          />
+          <LinearGradient
+            colors={['#00B3FF', '#5603BD']}
+            style={[styles.bubble, styles.bubbleBottomRight]}
+          />
+          <LinearGradient
+            colors={['#00B3FF', '#5603BD']}
+            style={[styles.smallBubble, styles.smallBubbleTop]}
+          />
+          <LinearGradient
+            colors={['#00B3FF', '#5603BD']}
+            style={[styles.smallBubble, styles.smallBubbleBottom]}
+          />
+        </View>
+
+        {/* Top Section */}
+        <View style={styles.topSection}>
+          <View style={styles.illustrationContainer}>
+            <Stethoscope size={120} color="#666" strokeWidth={1.5} />
+            <View style={styles.decorativeElements}>
+              <View style={[styles.dot, { top: 20, left: 30 }]} />
+              <View style={[styles.dot, { top: 60, right: 40 }]} />
+              <View style={[styles.dot, { bottom: 40, left: 20 }]} />
+              <View style={[styles.smallDot, { top: 80, left: 60 }]} />
+              <View style={[styles.smallDot, { bottom: 20, right: 30 }]} />
+            </View>
+          </View>
+          <Text style={styles.title}>Sign In</Text>
+        </View>
+
+        {/* Form Section */}
+        <View style={styles.formSection}>
+          {isSignup && (
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Name"
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          )}
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              placeholderTextColor="#9CA3AF"
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff color="#9CA3AF" size={20} />
+              ) : (
+                <Eye color="#9CA3AF" size={20} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Gradient Sign In Button */}
+          <TouchableOpacity onPress={handleLogin} style={{ marginBottom: 16 }}>
+            <LinearGradient
+              colors={['#00B3FF', '#5603BD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.signInButton}
+            >
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.divider}>
+            <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
+          </View>
+
+
+          {/* Secondary Button */}
           <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
+            style={styles.secondaryButton}
+            onPress={() => router.push('/signup')}
           >
-            <MaskedView maskElement={<ArrowLeft size={24} color="black" />}>
+            <MaskedView
+              maskElement={
+                <Text style={styles.secondaryButtonText}>
+                  {isSignup
+                    ? 'Already have an account? Sign In'
+                    : "Don't have an account? Sign Up"}
+                </Text>
+              }
+            >
               <LinearGradient
                 colors={['#00B3FF', '#5603BD']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ width: 24, height: 24 }}
+                style={{ flex: 1 }}
               />
             </MaskedView>
           </TouchableOpacity>
-
-          <MaskedView maskElement={<Text style={styles.headerTitle}>Login</Text>}>
-            <LinearGradient
-              colors={['#00B3FF', '#5603BD']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={[styles.headerTitle, { opacity: 0 }]}>Login</Text>
-            </LinearGradient>
-          </MaskedView>
-        </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>
-              {isSignup ? 'Create Account' : 'Welcome Back'}
-            </Text>
-            <Text style={styles.subtitle}>
-              {isDoctorLogin
-                ? 'Access your professional dashboard'
-                : 'Manage your health journey'}
-            </Text>
-          </View>
-
-          {/* Form */}
-          <View style={styles.form}>
-            {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email address"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-
-            {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                placeholderTextColor="#9CA3AF"
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff color="#9CA3AF" size={20} />
-                ) : (
-                  <Eye color="#9CA3AF" size={20} />
-                )}
-              </TouchableOpacity>
-            </View>
-
-
-            {/* Primary Button */}
-            <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-              <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.buttonGradient}>
-                <Text style={styles.buttonText}>{isSignup ? 'Sign Up' : 'Sign In'}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.divider}>
-              <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
-            </View>
-
-            {/* Secondary Button */}
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.push('/signup')}
-            >
-              <MaskedView
-                maskElement={
-                  <Text style={styles.secondaryButtonText}>
-                    {isSignup
-                      ? 'Already have an account? Sign In'
-                      : "Don't have an account? Sign Up"}
-                  </Text>
-                }
-              >
-                <LinearGradient
-                  colors={['#00B3FF', '#5603BD']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={[styles.secondaryButtonText, { opacity: 0 }]}>Dummy</Text>
-                </LinearGradient>
-              </MaskedView>
-            </TouchableOpacity>
-          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -179,91 +187,97 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#f8f9fa' },
+
+  bubblesContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 0,
   },
-  header: {
-    flexDirection: 'row',
+  bubble: {
+    position: 'absolute',
+    borderRadius: 200,
+    // Add to your existing bubble styles
+    shadowColor: '#949ca0ff',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  bubbleTopLeft: {
+    width: 350,
+    height: 350,
+    top: -90,
+    left: -90,
+  },
+  bubbleBottomRight: {
+    width: 250,
+    height: 250,
+    bottom: -110,
+    right: -110,
+  },
+  smallBubble: {
+    position: 'absolute',
+    borderRadius: 100,
+    width: 100,
+    height: 100,
+  },
+  smallBubbleTop: { top: 120, right: 30 },
+  smallBubbleBottom: { bottom: 180, left: 40 },
+
+  topSection: {
+    flex: 0.4,
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    justifyContent: 'center',
+    paddingTop: 40,
+    zIndex: 1,
   },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-    // Gradient can be applied via LinearGradient in the component
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    // Gradient text via MaskedView + LinearGradient in the component
-  },
-  content: {
+  illustrationContainer: { position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
+  decorativeElements: { position: 'absolute', width: 200, height: 200 },
+  dot: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#ddd' },
+  smallDot: { position: 'absolute', width: 4, height: 4, borderRadius: 2, backgroundColor: '#ddd' },
+  title: { fontSize: 32, fontWeight: 'bold', color: '#333', textAlign: 'center' },
+
+  formSection: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
+    justifyContent: 'center',
+    transform: [{ translateY: -60 }],
+    zIndex: 1
   },
 
-  form: {
-    flex: 1,
-  },
-
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  titleSection: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 36, // increased size for "Welcome Back"
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 24,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6', // light gray background
-    borderWidth: 0, // remove black outline
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  input: {
-    borderWidth: 0,
-    outlineWidth: 0,
-    flex: 1,
-    fontSize: 24,
-    color: '#111827',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
+  input: { flex: 1, fontSize: 16, color: '#333', outlineWidth: 0 },
+  eyeIcon: { padding: 4, marginLeft: 10 },
 
-  primaryButton: {
-    marginTop: 24,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    paddingVertical: 18,
+  signInButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 25,
+    width: '20%',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignSelf: 'center',
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
+  signInButtonText: { fontSize: 18, fontWeight: '600', color: '#fff', textAlign: 'center' },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -280,7 +294,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-
   secondaryButton: {
     paddingVertical: 16,
     alignItems: 'center',
@@ -290,4 +303,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000', // replace with gradient if needed
   },
+  signUpText: { fontSize: 14, color: '#000', textAlign: 'center' },
 });
