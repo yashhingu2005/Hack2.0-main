@@ -303,7 +303,7 @@ export default function AppointmentsScreen() {
       try {
         // Remove markdown code blocks and backticks if present
         let jsonText = responseText.trim();
-        jsonText = jsonText.replace(/^[`]+/, '').replace(/[`]+$/, '');
+        jsonText = jsonText.replace(/```json\n?|\n?```/g, '').replace(/```\n?|\n?```/g, '').replace(/^[`]+/, '').replace(/[`]+$/, '');
         parsedData = JSON.parse(jsonText);
       } catch (parseError) {
         console.error('Error parsing Gemini response:', parseError);
@@ -356,18 +356,14 @@ If there are instructions, include them in the instructions field.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const decodedText = response.text();
+      const decodedText = await response.text();
 
       // Parse the JSON response
       let parsedData;
       try {
         // Remove markdown code blocks if present
         let jsonText = decodedText.trim();
-        if (jsonText.startsWith('json')) {
-          jsonText = jsonText.replace(/^json\s*/, '').replace(/\s*$/, '');
-        } else if (jsonText.startsWith('')) {
-          jsonText = jsonText.replace(/^\s*/, '').replace(/\s*$/, '');
-        }
+        jsonText = jsonText.replace(/```json\n?|\n?```/g, '');
         parsedData = JSON.parse(jsonText);
       } catch (parseError) {
         console.error('Error parsing Gemini response:', parseError);

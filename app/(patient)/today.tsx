@@ -10,17 +10,78 @@ import {
   Modal,
   TextInput,
   Alert,
-  
+
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { AuthContext } from '@/contexts/AuthContext';
 import { Calendar, Clock, FileText, AlertTriangle, Plus, X, Pill, User, MapPin } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = useRouter();
 const handleSOSPress = () => {
   router.push('/(patient)/sos');
+};
+
+const GEMINI_API_KEY = 'AIzaSyB6g9OleRTdwB-vLXiFhvD7ESGarPBvqkQ'; // Replace with your actual API key
+
+// Helper function to parse prescription instructions using Gemini AI
+const parsePrescriptionInstructions = async (instructions: string, createdAt: string, currentDay: number, takenOn: string[] = []) => {
+  try {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const isTakenToday = takenOn.includes(today);
+
+    const prompt = `Analyze the following prescription instructions and extract the dosage and frequency for the current day. Also calculate how many days are left for this prescription.
+
+Instructions: "${instructions}"
+Prescription created on: ${createdAt}
+Current day number: ${currentDay}
+Taken on dates: ${JSON.stringify(takenOn)}
+Today is: ${today}
+Already taken today: ${isTakenToday}
+
+Please respond with a JSON object in this exact format:
+{
+  "dosage": "1pill/500mg" or "1pill" or "2pills" (format as number of pills followed by mg if available),
+  "frequency": "once daily" or "twice daily" etc.,
+  "daysLeft": number (how many days remaining from today),
+  "isActive": boolean (true if still active for current day AND not taken today, false if expired or already taken),
+  "shouldShow": boolean (true if medicine should be displayed today - active and not taken)
+}
+
+If you cannot determine the dosage or frequency, use default values. If the prescription duration is not specified, assume 7 days. Consider the taken_on array - if today is in the array, the medicine has already been taken and should not be shown.`;
+
+    const result = await model.generateContent([prompt]);
+    const responseText = await result.response.text();
+
+    // Parse the JSON response
+    const parsedData = JSON.parse(responseText.replace(/```json\n?|\n?```/g, ''));
+
+    return {
+      dosage: parsedData.dosage || '1pill',
+      frequency: parsedData.frequency || 'As per instructions',
+      daysLeft: parsedData.daysLeft || 0,
+      isActive: parsedData.isActive !== false, // Default to true if not specified
+      shouldShow: parsedData.shouldShow !== false, // Default to true if not specified
+    };
+  } catch (error) {
+    console.error('Error parsing instructions with Gemini:', error);
+    // Return default values if parsing fails
+    const today = new Date().toISOString().split('T')[0];
+    const isTakenToday = takenOn.includes(today);
+
+    return {
+      dosage: '1pill',
+      frequency: 'As per instructions',
+      daysLeft: 7,
+      isActive: true,
+      shouldShow: !isTakenToday, // Don't show if already taken today
+    };
+  }
 };
 
 interface AppointmentRequest {
@@ -65,75 +126,12 @@ interface Medicine {
   name: string;
   dosage: string;
   frequency: string;
+  instructions: string;
   disease: string;
+  prescriptionId: string;
+  medicineIndex: number;
+  takenToday: boolean;
 }
-
-// Dummy prescriptions data (keeping your existing data)
-const dummyPrescriptions = [
-  {
-    id: '1',
-    doctorName: 'Dr. Priya Sharma',
-    doctorSpecialty: 'Cardiologist',
-    date: '2025-08-15',
-    medicines: ['Telma 40mg - Take once daily on empty stomach', 'Glycomet 500mg - Take twice daily with meals'],
-    instructions: 'Take medications with food. Monitor blood pressure daily. Follow up in 2 weeks.',
-    status: 'active'
-  },
-  {
-    id: '2',
-    doctorName: 'Dr. Rajesh Gupta',
-    doctorSpecialty: 'Cardiologist',
-    date: '2025-07-20',
-    medicines: ['Losar 50mg - Take once daily', 'Ecosprin 75mg - Take after dinner'],
-    instructions: 'Continue current medication. Reduce salt intake. Avoid oily and spicy foods.',
-    status: 'completed'
-  },
-  {
-    id: '3',
-    doctorName: 'Dr. Sunita Patel',
-    doctorSpecialty: 'Cardiologist',
-    date: '2025-06-10',
-    medicines: ['Atorva 20mg - Take at bedtime'],
-    instructions: 'Can be taken with or without food. Get cholesterol test done monthly.',
-    status: 'active'
-  },
-  {
-    id: '4',
-    doctorName: 'Dr. Amit Singh',
-    doctorSpecialty: 'Oncologist',
-    date: '2025-08-25',
-    medicines: ['Nolvadex 20mg - Take daily at same time', 'Ondansetron 8mg - Take when nauseous'],
-    instructions: 'Take Nolvadx at the same time daily. Use Ondansetron only when experiencing nausea.',
-    status: 'active'
-  },
-  {
-    id: '5',
-    doctorName: 'Dr. Kavita Joshi',
-    doctorSpecialty: 'Oncologist',
-    date: '2025-07-30',
-    medicines: ['Perinorm 10mg - Take before meals'],
-    instructions: 'Take 30 minutes before meals. Contact immediately if severe side effects occur.',
-    status: 'completed'
-  },
-  {
-    id: '6',
-    doctorName: 'Dr. Manoj Kumar',
-    doctorSpecialty: 'Neurologist',
-    date: '2025-08-20',
-    medicines: ['Gabapin 300mg - Take three times daily', 'Neurobion Forte - Take once daily'],
-    instructions: 'Gradually increase dosage as tolerated. Take with food to avoid stomach upset.',
-    status: 'active'
-  },
-  {
-    id: '7',
-    doctorName: 'Dr. Deepika Agarwal',
-    doctorSpecialty: 'Dermatologist',
-    date: '2025-08-10',
-    medicines: ['Tretinoin 0.025% - Apply at night', 'Sunscreen SPF 30 - Apply daily'],
-    instructions: 'Apply Tretinoin sparingly. Always use sunscreen during the day.',
-    status: 'active'
-  }
-];
 
 export default function TodayScreen() {
   const { user } = useContext(AuthContext);
@@ -142,11 +140,11 @@ export default function TodayScreen() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [todaysMedicines, setTodaysMedicines] = useState<Medicine[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
-  
+
   // Modal states
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showMedicineModal, setShowMedicineModal] = useState(false);
-  
+
   // Form states for appointment request
   const [appointmentForm, setAppointmentForm] = useState({
     doctor_id: '',
@@ -156,7 +154,7 @@ export default function TodayScreen() {
     symptoms: '',
     notes: '',
   });
-  
+
   // Form states for medicine
   const [medicineForm, setMedicineForm] = useState({
     name: '',
@@ -322,27 +320,95 @@ export default function TodayScreen() {
     }
   };
 
-  const loadTodaysMedicines = () => {
-    // Extract medicines from active prescriptions
-    const activeMedicines: Medicine[] = [];
-    
-    dummyPrescriptions
-      .filter(prescription => prescription.status === 'active')
-      .forEach(prescription => {
-        prescription.medicines.forEach((medicine, index) => {
-          const [name, instruction] = medicine.split(' - ');
-          activeMedicines.push({
-            id:` ${prescription.id}-${index}`,
-            name: name.trim(),
-            dosage: name.split(' ')[1] || '',
-            frequency: instruction || '',
-            disease: prescription.doctorSpecialty || 'General',
-          });
-        });
-      });
-    
-    setTodaysMedicines(activeMedicines);
+  const fetchPrescriptions = async () => {
+    if (!user) {
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('prescriptions')
+        .select(`
+          id,
+          medicines,
+          instructions,
+          status,
+          created_at,
+          taken_on,
+          doctor:doctor_id (
+            id,
+            name,
+            doctors (
+              specialty
+            )
+          )
+        `)
+        .eq('patient_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching prescriptions:', error);
+        return;
+      }
+
+      if (data) {
+        const activeMedicines: Medicine[] = [];
+
+        // Process each prescription with Gemini AI
+        for (const prescription of data) {
+          const createdDate = new Date(prescription.created_at);
+          const currentDate = new Date();
+          const daysSinceCreated = Math.floor((currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+          const currentDay = daysSinceCreated + 1; // Day 1 is the first day
+
+          // Parse instructions using Gemini AI
+          const parsedInstructions = await parsePrescriptionInstructions(
+            prescription.instructions,
+            prescription.created_at,
+            currentDay,
+            prescription.taken_on || []
+          );
+
+          // Only include medicines if they should be shown today
+          if (parsedInstructions.shouldShow) {
+            prescription.medicines.forEach((medicine: string, index: number) => {
+              const [name] = medicine.split(' - '); // Extract medicine name
+              activeMedicines.push({
+                id: `${prescription.id}-${index}`,
+                name: name.trim(),
+                dosage: parsedInstructions.dosage,
+                frequency: parsedInstructions.frequency,
+                instructions: prescription.instructions,
+                disease: (prescription.doctor as any)?.doctors?.specialty || 'General',
+                prescriptionId: prescription.id,
+                medicineIndex: index,
+                takenToday: false, // Will be updated when marking as taken
+              });
+            });
+          }
+        }
+
+        setTodaysMedicines(activeMedicines);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching prescriptions:', error);
+    }
   };
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoadingAppointments(true);
+      await Promise.all([
+        fetchDoctors(),
+        fetchAppointmentRequests(),
+        fetchConfirmedAppointments(),
+        fetchPrescriptions(),
+      ]);
+      setLoadingAppointments(false);
+    };
+
+    loadData();
+  }, [user]);
 
   const handleAddAppointmentRequest = async () => {
     if (!user || !appointmentForm.doctor_id || !appointmentForm.requested_time) {
@@ -406,12 +472,82 @@ export default function TodayScreen() {
       dosage: medicineForm.dosage,
       frequency: medicineForm.frequency,
       disease: medicineForm.disease,
+      prescriptionId: '',
+      medicineIndex: todaysMedicines.length,
+      takenToday: false,
     };
 
     setTodaysMedicines(prev => [...prev, newMedicine]);
     setMedicineForm({ name: '', dosage: '', frequency: '', disease: '' });
     setShowMedicineModal(false);
     Alert.alert('Success', 'Medicine added successfully!');
+  };
+
+  const handleMarkMedicineTaken = async (medicine: Medicine) => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      console.log('Marking medicine as taken:', medicine.name, 'prescriptionId:', medicine.prescriptionId);
+
+      if (medicine.prescriptionId) {
+        // Fetch current taken_on array, append today's date, and update
+        console.log('Fetching current taken_on for prescription:', medicine.prescriptionId);
+
+        const { data: currentPrescription, error: fetchError } = await supabase
+          .from('prescriptions')
+          .select('taken_on')
+          .eq('id', medicine.prescriptionId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching current prescription:', fetchError);
+          Alert.alert('Error', `Failed to fetch prescription: ${fetchError.message}`);
+          return;
+        }
+
+        const currentTakenOn = currentPrescription?.taken_on || [];
+        console.log('Current taken_on array:', currentTakenOn);
+
+        if (!currentTakenOn.includes(today)) {
+          console.log('Appending date to taken_on for prescription:', medicine.prescriptionId);
+
+          const { data: updateData, error: updateError } = await supabase.rpc('append_taken_date', {
+            prescription_id: medicine.prescriptionId,
+            new_date: today
+          });
+
+          if (updateError) {
+            console.error('Error appending date to taken_on:', updateError);
+            Alert.alert('Error', `Failed to mark medicine as taken: ${updateError.message}`);
+            return;
+          }
+
+          console.log('Date appended successfully, updated taken_on:', updateData);
+        } else {
+          console.log('Medicine already marked as taken today');
+        }
+      } else {
+        console.log('No prescriptionId, this is a manually added medicine');
+      }
+
+      // Update local state to mark as taken
+      console.log('Updating local state for medicine:', medicine.id);
+      console.log('Current medicines before update:', todaysMedicines);
+      setTodaysMedicines(prev => {
+        const updated = prev.map(m => {
+          console.log('Checking medicine:', m.id, 'vs', medicine.id, 'match:', m.id === medicine.id);
+          return m.id === medicine.id
+            ? { ...m, takenToday: true }
+            : m;
+        });
+        console.log('Updated medicines state:', updated);
+        return updated;
+      });
+
+      Alert.alert('Success', `${medicine.name} marked as taken!`);
+    } catch (error) {
+      console.error('Error marking medicine as taken:', error);
+      Alert.alert('Error', 'Failed to mark medicine as taken');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -422,21 +558,6 @@ export default function TodayScreen() {
       minute: '2-digit'
     });
   };
-
-  useEffect(() => {
-    const loadData = async () => {
-      setLoadingAppointments(true);
-      await Promise.all([
-        fetchDoctors(),
-        fetchAppointmentRequests(),
-        fetchConfirmedAppointments(),
-      ]);
-      loadTodaysMedicines();
-      setLoadingAppointments(false);
-    };
-
-    loadData();
-  }, [user]);
 
   if (loadingAppointments) {
     return (
@@ -564,15 +685,32 @@ export default function TodayScreen() {
           </View>
           {todaysMedicines.length > 0 ? (
             todaysMedicines.map((medicine) => (
-              <View key={medicine.id} style={styles.card}>
+              <TouchableOpacity
+                key={medicine.id}
+                style={[
+                  styles.card,
+                  medicine.takenToday && styles.takenCard
+                ]}
+                onPress={() => handleMarkMedicineTaken(medicine)}
+                disabled={medicine.takenToday}
+              >
                 <View style={styles.cardHeader}>
-                  <Pill color="#8B5CF6" size={20} />
+                  <Pill color={medicine.takenToday ? "#10B981" : "#8B5CF6"} size={20} />
                   <Text style={styles.cardTitle}>{medicine.name}</Text>
+                  {medicine.takenToday && (
+                    <View style={styles.takenBadge}>
+                      <Text style={styles.takenBadgeText}>✓ Taken</Text>
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.cardText}>Dosage: {medicine.dosage}</Text>
                 <Text style={styles.cardText}>Frequency: {medicine.frequency}</Text>
+                <Text style={styles.cardText}>Instructions: {medicine.instructions}</Text>
                 <Text style={styles.cardText}>For: {medicine.disease}</Text>
-              </View>
+                {!medicine.takenToday && (
+                  <Text style={styles.tapHint}>Tap to mark as taken</Text>
+                )}
+              </TouchableOpacity>
             ))
           ) : (
             <Text style={styles.emptyText}>No medicines scheduled for today.</Text>
@@ -1010,5 +1148,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  takenCard: {
+    backgroundColor: '#F0FDF4',
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981',
+  },
+  takenBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  takenBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  tapHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

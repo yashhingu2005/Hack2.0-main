@@ -125,13 +125,15 @@ export default function AssistantScreen() {
       const prompt = `You are a friendly and knowledgeable health assistant for patients. Provide clear, concise, and helpful information about health topics. Always include a disclaimer to consult healthcare professionals for medical advice.
 
 Format your responses using markdown for better readability:
-- Use **bold** for important terms or headings
-- Use bullet points (-) for lists
-- Use numbered lists (1., 2., etc.) when appropriate
+- Use bold for important terms or headings (do not include markdown symbols like **)
+- Use bullet points (-) for lists without markdown symbols
+- Use numbered lists (1., 2., etc.) without markdown symbols
 - Keep paragraphs short and to the point
 - Use emojis sparingly for friendliness (e.g., 💊 for medicine)
 - Structure responses with clear sections if needed
 - End with a clear disclaimer
+
+Format the output for display on a phone screen, keeping content concise, easy to read, and mobile-friendly.
 
 Keep responses engaging, empathetic, and easy to read. Avoid long paragraphs.
 
@@ -189,19 +191,19 @@ Assistant:`;
           </View>
         </View>
         <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
-  <AlertTriangle color="#FFFFFF" size={24} />
-</TouchableOpacity>
+          <AlertTriangle color="#FFFFFF" size={24} />
+        </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView 
-        style={styles.flex} 
+      <KeyboardAvoidingView
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        
+
         {/* Quick Questions */}
         <View style={styles.quickQuestionsSection}>
           <Text style={styles.quickQuestionsTitle}>Quick Questions</Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.quickQuestionsScroll}>
             {quickQuestions.map((question, index) => (
@@ -261,12 +263,16 @@ Assistant:`;
                 styles.messageBubble,
                 message.sender === 'user' ? styles.userBubble : styles.assistantBubble
               ]}>
-                <Text style={[
-                  styles.messageText,
-                  message.sender === 'user' ? styles.userMessageText : styles.assistantMessageText
-                ]}>
-                  {message.text}
-                </Text>
+                {message.sender === 'assistant' ? (
+                  <MarkdownRenderer markdownText={message.text} />
+                ) : (
+                  <Text style={[
+                    styles.messageText,
+                    message.sender === 'user' ? styles.userMessageText : styles.assistantMessageText
+                  ]}>
+                    {message.text}
+                  </Text>
+                )}
                 <Text style={styles.messageTime}>
                   {new Date(message.timestamp).toLocaleTimeString([], {
                     hour: '2-digit',
@@ -320,9 +326,9 @@ Assistant:`;
               style={styles.sendButton}
               onPress={sendMessage}
               disabled={!inputText.trim()}>
-              <Send 
-                color={inputText.trim() ? "#FFFFFF" : "#9CA3AF"} 
-                size={20} 
+              <Send
+                color={inputText.trim() ? "#FFFFFF" : "#9CA3AF"}
+                size={20}
               />
             </TouchableOpacity>
           </View>
@@ -331,6 +337,103 @@ Assistant:`;
     </SafeAreaView>
   );
 }
+
+// Simple markdown renderer component for basic markdown support
+const MarkdownRenderer = ({ markdownText }: { markdownText: string }) => {
+  // Basic parsing for bold, bullet points, numbered lists, and line breaks
+  const lines = markdownText.split('\n');
+
+  return (
+    <View>
+      {lines.map((line, index) => {
+        // Bold text: **text**
+        const boldRegex = /\*\*(.+?)\*\*/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = boldRegex.exec(line)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push({ text: line.substring(lastIndex, match.index), bold: false });
+          }
+          // Remove ** ** from bold text for display
+          parts.push({ text: match[1], bold: true });
+          lastIndex = match.index + match[0].length;
+        }
+        if (lastIndex < line.length) {
+          parts.push({ text: line.substring(lastIndex), bold: false });
+        }
+
+        // Bullet points: lines starting with '- '
+        if (line.startsWith('- ')) {
+          return (
+            <View key={index} style={markdownStyles.bulletPoint}>
+              <Text style={markdownStyles.bulletSymbol}>{'\u2022'}</Text>
+              <Text style={markdownStyles.bulletText}>
+                {parts.map((part, i) => (
+                  <Text key={i} style={part.bold ? markdownStyles.boldText : undefined}>
+                    {part.text}
+                  </Text>
+                ))}
+              </Text>
+            </View>
+          );
+        }
+
+        // Numbered lists: lines starting with '1. ', '2. ', etc.
+        const numberedListMatch = line.match(/^(\d+)\.\s+(.*)/);
+        if (numberedListMatch) {
+          return (
+            <View key={index} style={markdownStyles.bulletPoint}>
+              <Text style={markdownStyles.bulletSymbol}>{numberedListMatch[1]}.</Text>
+              <Text style={markdownStyles.bulletText}>
+                {numberedListMatch[2]}
+              </Text>
+            </View>
+          );
+        }
+
+        // Normal paragraph line
+        return (
+          <Text key={index} style={markdownStyles.paragraph}>
+            {parts.map((part, i) => (
+              <Text key={i} style={part.bold ? markdownStyles.boldText : undefined}>
+                {part.text}
+              </Text>
+            ))}
+          </Text>
+        );
+      })}
+    </View>
+  );
+};
+
+const markdownStyles = StyleSheet.create({
+  bulletPoint: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  bulletSymbol: {
+    marginRight: 6,
+    fontSize: 16,
+    color: '#374151',
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#374151',
+  },
+  boldText: {
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  paragraph: {
+    marginBottom: 8,
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 22,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
