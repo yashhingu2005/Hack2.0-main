@@ -72,7 +72,7 @@ export default function LoginScreen() {
             <ArrowLeft color="#374151" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {isDoctorLogin ? 'Doctor Login' : 'Patient Login'}
+            Login
           </Text>
         </View>
 
@@ -173,15 +173,6 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        {/* Demo Credentials */}
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Credentials:</Text>
-          <Text style={styles.demoText}>
-            Email: {isDoctorLogin ? 'doctor@demo.com' : 'patient@demo.com'}
-          </Text>
-          <Text style={styles.demoText}>Password: demo123</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
