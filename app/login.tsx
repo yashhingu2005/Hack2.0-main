@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,10 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
-import { useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -34,13 +34,9 @@ export default function LoginScreen() {
     try {
       await login(email, password, role as 'doctor' | 'patient');
 
-      // Check if patient onboarding is needed
       if (role === 'patient') {
-        console.log('Checking patient onboarding for user:', user?.id);
         const onboardingComplete = await checkPatientOnboarding(user?.id || '');
-        console.log('Onboarding complete:', onboardingComplete);
         if (!onboardingComplete) {
-          console.log('Redirecting to onboarding');
           router.replace('/(patient)/onboarding');
           return;
         }
@@ -52,28 +48,39 @@ export default function LoginScreen() {
     }
   };
 
-  const handleSignup = () => {
-    router.push('/signup');
-  };
-
   const isDoctorLogin = role === 'doctor';
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}>
-            <ArrowLeft color="#374151" size={24} />
+            onPress={() => router.back()}
+          >
+            <MaskedView maskElement={<ArrowLeft size={24} color="black" />}>
+              <LinearGradient
+                colors={['#00B3FF', '#5603BD']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ width: 24, height: 24 }}
+              />
+            </MaskedView>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            Login
-          </Text>
+
+          <MaskedView maskElement={<Text style={styles.headerTitle}>Login</Text>}>
+            <LinearGradient
+              colors={['#00B3FF', '#5603BD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={[styles.headerTitle, { opacity: 0 }]}>Login</Text>
+            </LinearGradient>
+          </MaskedView>
         </View>
 
         {/* Content */}
@@ -83,19 +90,16 @@ export default function LoginScreen() {
               {isSignup ? 'Create Account' : 'Welcome Back'}
             </Text>
             <Text style={styles.subtitle}>
-              {isDoctorLogin 
-                ? 'Access your professional dashboard' 
-                : 'Manage your health journey'
-              }
+              {isDoctorLogin
+                ? 'Access your professional dashboard'
+                : 'Manage your health journey'}
             </Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
+            {/* Email Input */}
             <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Mail color="#9CA3AF" size={20} />
-              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Email address"
@@ -107,10 +111,8 @@ export default function LoginScreen() {
               />
             </View>
 
+            {/* Password Input */}
             <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Lock color="#9CA3AF" size={20} />
-              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -121,7 +123,8 @@ export default function LoginScreen() {
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}>
+                onPress={() => setShowPassword(!showPassword)}
+              >
                 {showPassword ? (
                   <EyeOff color="#9CA3AF" size={20} />
                 ) : (
@@ -130,47 +133,43 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
+
+            {/* Primary Button */}
             <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-              <LinearGradient
-                colors={isDoctorLogin ? ['#2563EB', '#1D4ED8'] : ['#10B981', '#059669']}
-                style={styles.buttonGradient}>
-                <Text style={styles.buttonText}>
-                  {isSignup ? 'Sign Up' : 'Sign In'}
-                </Text>
+              <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.buttonGradient}>
+                <Text style={styles.buttonText}>{isSignup ? 'Sign Up' : 'Sign In'}</Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Removed Google login button as per request */}
-            {/* <TouchableOpacity
-              style={styles.googleButton}
-              onPress={async () => {
-                try {
-                  await loginWithGoogle(role as 'doctor' | 'patient');
-                } catch (error) {
-                  Alert.alert('Error', 'Google login failed');
-                }
-              }}>
-              <View style={styles.googleButtonContent}>
-                <Chrome color="#4285F4" size={20} />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
-              </View>
-            </TouchableOpacity> */}
-
+            {/* Divider */}
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
+              <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
+              <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
             </View>
 
+            {/* Secondary Button */}
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => router.push('/signup')}>
-              <Text style={styles.secondaryButtonText}>
-                {isSignup 
-                  ? 'Already have an account? Sign In' 
-                  : "Don't have an account? Sign Up"
+              onPress={() => router.push('/signup')}
+            >
+              <MaskedView
+                maskElement={
+                  <Text style={styles.secondaryButtonText}>
+                    {isSignup
+                      ? 'Already have an account? Sign In'
+                      : "Don't have an account? Sign Up"}
+                  </Text>
                 }
-              </Text>
+              >
+                <LinearGradient
+                  colors={['#00B3FF', '#5603BD']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.secondaryButtonText, { opacity: 0 }]}>Dummy</Text>
+                </LinearGradient>
+              </MaskedView>
             </TouchableOpacity>
           </View>
         </View>
@@ -180,10 +179,6 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
   flex: {
     flex: 1,
   },
@@ -197,56 +192,62 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     marginRight: 16,
+    // Gradient can be applied via LinearGradient in the component
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#374151',
+    // Gradient text via MaskedView + LinearGradient in the component
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+
+  form: {
+    flex: 1,
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   titleSection: {
     alignItems: 'center',
     marginBottom: 40,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36, // increased size for "Welcome Back"
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 24,
     color: '#6B7280',
     textAlign: 'center',
-  },
-  form: {
-    flex: 1,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6', // light gray background
+    borderWidth: 0, // remove black outline
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
-  },
-  inputIcon: {
-    marginRight: 12,
+    paddingVertical: 14,
   },
   input: {
+    borderWidth: 0,
+    outlineWidth: 0,
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: '#374151',
+    fontSize: 24,
+    color: '#111827',
   },
   eyeIcon: {
     padding: 4,
   },
+
   primaryButton: {
     marginTop: 24,
     borderRadius: 12,
@@ -262,6 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,59 +272,22 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    // Apply LinearGradient in component for gradient effect
   },
   dividerText: {
     marginHorizontal: 16,
-    color: '#9CA3AF',
+    color: '#9CA3AF', // replace with gradient via MaskedView if needed
     fontSize: 14,
     fontWeight: '500',
   },
+
   secondaryButton: {
     paddingVertical: 16,
     alignItems: 'center',
   },
   secondaryButtonText: {
     fontSize: 16,
-    color: '#2563EB',
     fontWeight: '500',
-  },
-  demoSection: {
-    backgroundColor: '#F3F4F6',
-    margin: 24,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginBottom: 2,
-  },
-  googleButton: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  googleButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleButtonText: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
+    color: '#000', // replace with gradient if needed
   },
 });
