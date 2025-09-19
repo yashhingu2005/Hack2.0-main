@@ -14,6 +14,7 @@ import {
 import { AuthContext } from '@/contexts/AuthContext';
 import { TriangleAlert as AlertTriangle, Send, Bot, User, Mic, MicOff, MessageCircle, Heart } from 'lucide-react-native';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+/* Removed import of react-native-markdown-display due to module resolution error */
 import { supabase } from '@/lib/supabase';
 
 interface Message {
@@ -121,7 +122,18 @@ export default function AssistantScreen() {
         `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
       ).join('\n');
 
-      const prompt = `You are a helpful health assistant for patients. Provide accurate, helpful information about health topics, but always remind users to consult healthcare professionals for medical advice. Keep responses concise and friendly and bulleted no long paragraphs and give basic prescriptions but not heavy doses and keep the disclaimer clear
+      const prompt = `You are a friendly and knowledgeable health assistant for patients. Provide clear, concise, and helpful information about health topics. Always include a disclaimer to consult healthcare professionals for medical advice.
+
+Format your responses using markdown for better readability:
+- Use **bold** for important terms or headings
+- Use bullet points (-) for lists
+- Use numbered lists (1., 2., etc.) when appropriate
+- Keep paragraphs short and to the point
+- Use emojis sparingly for friendliness (e.g., 💊 for medicine)
+- Structure responses with clear sections if needed
+- End with a clear disclaimer
+
+Keep responses engaging, empathetic, and easy to read. Avoid long paragraphs.
 
 Previous conversation:
 ${conversationHistory}
