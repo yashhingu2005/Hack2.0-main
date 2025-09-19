@@ -1,6 +1,24 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.appointment_requests (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  patient_id uuid,
+  doctor_id uuid,
+  patient_name text NOT NULL,
+  requested_time text NOT NULL,
+  appointment_type text DEFAULT 'in-person'::text CHECK (appointment_type = ANY (ARRAY['video'::text, 'in-person'::text])),
+  priority text DEFAULT 'medium'::text CHECK (priority = ANY (ARRAY['high'::text, 'medium'::text, 'low'::text])),
+  symptoms text,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'rejected'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  consultation_fee numeric DEFAULT 0,
+  notes text DEFAULT ''::text,
+  CONSTRAINT appointment_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT appointment_requests_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(id),
+  CONSTRAINT appointment_requests_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.users(id)
+);
 CREATE TABLE public.appointments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   patient_id uuid,
@@ -11,6 +29,9 @@ CREATE TABLE public.appointments (
   notes text,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  priority text DEFAULT 'medium'::text CHECK (priority = ANY (ARRAY['high'::text, 'medium'::text, 'low'::text])),
+  type text DEFAULT 'Consultation'::text,
+  appointment_type text DEFAULT 'in-person'::text CHECK (appointment_type = ANY (ARRAY['video'::text, 'in-person'::text])),
   CONSTRAINT appointments_pkey PRIMARY KEY (id),
   CONSTRAINT appointments_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(id),
   CONSTRAINT appointments_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.users(id)
@@ -32,8 +53,28 @@ CREATE TABLE public.doctors (
   specialty text,
   hospital text,
   rating numeric,
+  registration_no text,
+  council_name text,
+  year_of_registration text,
+  is_verified boolean DEFAULT false,
   CONSTRAINT doctors_pkey PRIMARY KEY (id),
   CONSTRAINT doctors_id_fkey FOREIGN KEY (id) REFERENCES public.users(id)
+);
+CREATE TABLE public.health_readings (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  patient_id uuid NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['blood_pressure'::text, 'blood_glucose'::text, 'other'::text])),
+  systolic numeric,
+  diastolic numeric,
+  glucose numeric,
+  unit text NOT NULL,
+  timestamp timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  meal_timing text CHECK (meal_timing = ANY (ARRAY['before_meal'::text, 'after_meal'::text])),
+  notes text,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT health_readings_pkey PRIMARY KEY (id),
+  CONSTRAINT health_readings_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.patients (
   id uuid NOT NULL,
@@ -63,43 +104,12 @@ CREATE TABLE public.prescriptions (
   status text NOT NULL DEFAULT 'active'::text CHECK (status = ANY (ARRAY['active'::text, 'completed'::text, 'cancelled'::text])),
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  taken_on ARRAY,
   CONSTRAINT prescriptions_pkey PRIMARY KEY (id),
   CONSTRAINT prescriptions_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(id),
   CONSTRAINT prescriptions_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.users(id),
   CONSTRAINT prescriptions_appointment_id_fkey FOREIGN KEY (appointment_id) REFERENCES public.appointments(id)
 );
-CREATE TABLE public.health_readings (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  patient_id uuid NOT NULL,
-  type text NOT NULL CHECK (type = ANY (ARRAY['blood_pressure'::text, 'blood_glucose'::text, 'other'::text])),
-  systolic numeric,
-  diastolic numeric,
-  glucose numeric,
-  unit text NOT NULL,
-  timestamp timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  meal_timing text CHECK (meal_timing = ANY (ARRAY['before_meal'::text, 'after_meal'::text])),
-  notes text,
-  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  CONSTRAINT health_readings_pkey PRIMARY KEY (id),
-  CONSTRAINT health_readings_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(id)
-);
-
--- Enable RLS
-ALTER TABLE public.health_readings ENABLE ROW LEVEL SECURITY;
-
--- Policy for SELECT: Users can view their own health readings
-CREATE POLICY "Users can view own health readings" ON public.health_readings
-  FOR SELECT USING (auth.uid() = patient_id);
-
--- Policy for INSERT: Users can insert their own health readings
-CREATE POLICY "Users can insert own health readings" ON public.health_readings
-  FOR INSERT WITH CHECK (auth.uid() = patient_id);
-
--- Policy for UPDATE: Users can update their own health readings
-CREATE POLICY "Users can update own health readings" ON public.health_readings
-  FOR UPDATE USING (auth.uid() = patient_id) WITH CHECK (auth.uid() = patient_id);
-
 CREATE TABLE public.sos_alerts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid,

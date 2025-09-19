@@ -49,7 +49,7 @@ const quickQuestions = [
 ];
 const router = useRouter();
 const handleSOSPress = () => {
-  router.push('/(patient)/sos');
+  router.push('/sos');
 };
 
 export default function AssistantScreen() {

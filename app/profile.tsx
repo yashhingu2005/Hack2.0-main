@@ -18,9 +18,12 @@ import { supabase } from '@/lib/supabase';
 import { TriangleAlert as AlertTriangle, Calendar, User, Settings, Moon, Globe, Circle as HelpCircle, LogOut, ChevronRight, CreditCard as Edit, Mail, Phone, MapPin, Stethoscope, Save, X, Shield, Pencil } from 'lucide-react-native';
 import { Accelerometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
+// @ts-ignore
+import * as SMS from 'expo-sms';
+import { NavigationBubble } from '@/components/NavigationBubble';
 
 const handleSOSPress = () => {
-  router.push('/(patient)/sos');
+  router.push('/sos');
 };
 
 interface EmergencyContact {
@@ -87,7 +90,7 @@ export default function ProfileScreen() {
     const { x, y, z } = accelerometerData;
     const magnitude = Math.sqrt(x * x + y * y + z * z);
 
-    console.log('Accelerometer data:', { x, y, z, magnitude });
+    // console.log('Accelerometer data:', { x, y, z, magnitude });
 
     // Simple fall detection: trigger on free fall detection
     if (magnitude < 0.3) { // Free fall detection
@@ -101,24 +104,93 @@ export default function ProfileScreen() {
   const fallVibrationInterval = React.useRef<any>(null);
   const fallCountdownInterval = React.useRef<any>(null);
 
-  const sendDistressSignal = () => {
+  const sendDistressSignal = async () => {
     setFallAlertVisible(false);
-    Alert.alert(
-      'Distress Signal Sent',
-      'Emergency services have been notified.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Re-subscribe to accelerometer after alert is dismissed
-            if (fallDetectionEnabled) {
-              _subscribe();
+
+    try {
+      // Check if SMS is available on the device
+      const isAvailable = await SMS.isAvailableAsync();
+
+      if (isAvailable && emergencyContacts.length > 0) {
+        // Prepare SMS message
+        const message = `EMERGENCY ALERT: ${user?.name} has fallen and needs immediate assistance. Location: ${profileData?.location || 'Unknown'}. Please respond urgently.`;
+
+        // Get phone numbers from emergency contacts
+        const recipients = emergencyContacts
+          .filter(contact => contact.phone && contact.phone.trim() !== '')
+          .map(contact => contact.phone);
+
+        if (recipients.length > 0) {
+          // Send SMS to all emergency contacts
+          const result = await SMS.sendSMSAsync(recipients, message);
+
+          Alert.alert(
+            'Distress Signal Sent',
+            `Emergency SMS sent to ${recipients.length} contact(s). Emergency services have been notified.`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Re-subscribe to accelerometer after alert is dismissed
+                  if (fallDetectionEnabled) {
+                    _subscribe();
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Distress Signal Sent',
+            'Emergency services have been notified. No emergency contacts with phone numbers found.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Re-subscribe to accelerometer after alert is dismissed
+                  if (fallDetectionEnabled) {
+                    _subscribe();
+                  }
+                }
+              }
+            ]
+          );
+        }
+      } else {
+        Alert.alert(
+          'Distress Signal Sent',
+          'Emergency services have been notified. SMS not available or no emergency contacts configured.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Re-subscribe to accelerometer after alert is dismissed
+                if (fallDetectionEnabled) {
+                  _subscribe();
+                }
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error sending distress signal:', error);
+      Alert.alert(
+        'Distress Signal Sent',
+        'Emergency services have been notified. There was an issue sending SMS alerts.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Re-subscribe to accelerometer after alert is dismissed
+              if (fallDetectionEnabled) {
+                _subscribe();
+              }
             }
           }
-        }
-      ]
-    );
-    // TODO: Implement actual distress signal sending logic here
+        ]
+      );
+    }
   };
 
   const cancelFallAlert = () => {
@@ -378,16 +450,21 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        {!isDoctorInterface && (
-          <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
-            <AlertTriangle color="#FFFFFF" size={24} />
-          </TouchableOpacity>
-        )}
-        {isDoctorInterface && (
-          <TouchableOpacity style={styles.calendarButton}>
-            <Calendar color="#2563EB" size={24} />
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerRight}>
+          {!isDoctorInterface && (
+            <>
+              <NavigationBubble />
+              <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
+                <AlertTriangle color="#FFFFFF" size={24} />
+              </TouchableOpacity>
+            </>
+          )}
+          {isDoctorInterface && (
+            <TouchableOpacity style={styles.calendarButton}>
+              <Calendar color="#2563EB" size={24} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -761,6 +838,11 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#EBF8FF',
     borderRadius: 12,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   sosButton: {
     backgroundColor: '#EF4444',

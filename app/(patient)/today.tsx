@@ -21,7 +21,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = useRouter();
 const handleSOSPress = () => {
-  router.push('/(patient)/sos');
+  router.push('/sos');
 };
 
 const GEMINI_API_KEY = 'AIzaSyB6g9OleRTdwB-vLXiFhvD7ESGarPBvqkQ'; // Replace with your actual API key
