@@ -15,7 +15,7 @@ import {
 import { router } from 'expo-router';
 import { AuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { TriangleAlert as AlertTriangle, Calendar, User, Settings, Moon, Globe, Circle as HelpCircle, LogOut, ChevronRight, CreditCard as Edit, Mail, Phone, MapPin, Stethoscope, Save, X } from 'lucide-react-native';
+import { TriangleAlert as AlertTriangle, Calendar, User, Settings, Moon, Globe, Circle as HelpCircle, LogOut, ChevronRight, CreditCard as Edit, Mail, Phone, MapPin, Stethoscope, Save, X, Pencil } from 'lucide-react-native';
 
 const handleCalendarpress = () => {
   router.push('/(doctor)/calendar');
@@ -179,9 +179,9 @@ export default function ProfileScreen() {
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
             <Image source={{ uri: profileData.avatar }} style={styles.profileAvatar} />
-            <TouchableOpacity style={styles.editButton}>
+            {/* <TouchableOpacity style={styles.editButton}>
               <Edit color="#FFFFFF" size={16} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
           
           <Text style={styles.profileName}>{profileData?.name}</Text>
@@ -224,10 +224,10 @@ export default function ProfileScreen() {
             <Phone color="#6B7280" size={20} />
             <Text style={styles.contactText}>{profileData?.phone || 'Not set'}</Text>
             <TouchableOpacity
-              style={styles.editButtonSmall}
+              style={styles.addButtonSmall}
               onPress={() => openEditModal('phone', profileData?.phone || '')}
             >
-              <Edit color="#FFFFFF" size={14} />
+              <Pencil color="#FFFFFF" size={14} />
             </TouchableOpacity>
           </TouchableOpacity>
 
@@ -238,10 +238,10 @@ export default function ProfileScreen() {
             <MapPin color="#6B7280" size={20} />
             <Text style={styles.contactText}>{profileData?.location || 'Not set'}</Text>
             <TouchableOpacity
-              style={styles.editButtonSmall}
+              style={styles.addButtonSmall}
               onPress={() => openEditModal('location', profileData?.location || '')}
             >
-              <Edit color="#FFFFFF" size={14} />
+              <Pencil color="#FFFFFF" size={14} />
             </TouchableOpacity>
           </TouchableOpacity>
         </View>
@@ -422,8 +422,8 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FFFFFF',
   },
-  editButtonSmall: {
-    backgroundColor: '#2563EB',
+  addButtonSmall: {
+    backgroundColor: '#16A34A', // green for "Add" (you can keep blue if you prefer)
     padding: 6,
     borderRadius: 12,
     marginLeft: 'auto',

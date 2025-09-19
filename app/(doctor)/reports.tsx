@@ -1,4 +1,9 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { FileDownloadService } from '@/utils/fileDownload';
+import * as Linking from 'expo-linking';
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import {
   View,
   Text,
@@ -7,6 +12,10 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
+  ActivityIndicator,
+  Modal,
+  Alert,
+  Dimensions,
 } from 'react-native';
 import { AuthContext } from '@/contexts/AuthContext';
 import { 
@@ -16,14 +25,12 @@ import {
   Eye, 
   User,
   Clock,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react-native';
-
 import { useRouter } from 'expo-router';
-const router = useRouter();
-const handleCalendarpress = () => {
-  router.push('/(doctor)/calendar');
-};
+
+const { width, height } = Dimensions.get('window');
 
 interface Report {
   id: string;
@@ -33,49 +40,66 @@ interface Report {
   status: 'pending' | 'reviewed' | 'urgent';
   fileSize: string;
   thumbnail: string;
+  pdfPath: any; // Asset require() returns number or string
 }
 
+// Update mock reports with local PDF paths
 const mockReports: Report[] = [
   {
     id: '1',
-    patientName: 'Priya Sharma',
+    patientName: 'Arvind Yadav',
     reportType: 'Blood Test Results',
-    uploadDate: '2024-03-15',
+    uploadDate: '2025-09-07',
     status: 'pending',
     fileSize: '2.3 MB',
-    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg'
+    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg',
+    pdfPath: require('../../assets/blood.pdf')
   },
   {
     id: '2',
-    patientName: 'Rajesh Kumar',
+    patientName: 'Yogesh Ghadge',
     reportType: 'Chest X-Ray',
-    uploadDate: '2024-03-14',
+    uploadDate: '2025-09-04',
     status: 'urgent',
     fileSize: '4.1 MB',
-    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg'
+    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg',
+    pdfPath: require('../../assets/chest.pdf')
   },
   {
     id: '3',
-    patientName: 'Anita Singh',
+    patientName: 'Suzanne Dantis',
     reportType: 'ECG Report',
-    uploadDate: '2024-03-13',
+    uploadDate: '2025-08-05',
     status: 'reviewed',
     fileSize: '1.8 MB',
-    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg'
+    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg',
+    pdfPath: require('../../assets/ecg.pdf')
   },
   {
     id: '4',
-    patientName: 'Vikram Patel',
+    patientName: 'Yash Hingu',
     reportType: 'MRI Scan',
-    uploadDate: '2024-03-10',
+    uploadDate: '2025-05-03',
     status: 'pending',
     fileSize: '8.7 MB',
-    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg'
+    thumbnail: 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg',
+    pdfPath: require('../../assets/mri.pdf')
   },
 ];
 
 export default function ReportsScreen() {
   const { user } = useContext(AuthContext);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [viewingReport, setViewingReport] = useState<Report | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const router = useRouter();
+
+  const handleCalendarpress = () => {
+    router.push('/(doctor)/calendar');
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -96,7 +120,112 @@ export default function ReportsScreen() {
   };
 
   const handleReportPress = (reportId: string) => {
-    console.log('Opening report:', reportId);
+    const report = mockReports.find(r => r.id === reportId);
+    if (report) {
+      handleViewReport(report);
+    }
+  };
+
+  const handleDownload = async (report: Report) => {
+    try {
+      setDownloadingId(report.id);
+
+      // Handle asset resolution for require() assets
+      let sourceUri: string;
+      if (typeof report.pdfPath === 'number') {
+        // It's a bundled asset, resolve it
+        const asset = Asset.fromModule(report.pdfPath);
+        await asset.downloadAsync();
+        sourceUri = asset.localUri || asset.uri;
+      } else {
+        // It's already a URI string
+        sourceUri = report.pdfPath;
+      }
+
+      // Create a unique filename
+      const timestamp = new Date().getTime();
+      const fileName = `${report.patientName.replace(/\s+/g, '_')}_${report.reportType.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+      const fileUri = FileSystem.documentDirectory + fileName;
+
+      // Copy the asset to document directory
+      await FileSystem.copyAsync({
+        from: sourceUri,
+        to: fileUri
+      });
+      console.log('File copied from assets to:', fileUri);
+
+      // Share the file instead of saving to gallery (works better in Expo Go)
+      await shareFile(fileUri, fileName);
+
+    } catch (error) {
+      console.error('Download error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert('Download Error', `Failed to download the file: ${errorMessage}`);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const shareFile = async (uri: string, fileName: string) => {
+    try {
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: `Share ${fileName}`,
+        });
+      } else {
+        Alert.alert('Sharing not available', 'File sharing is not available on this device.');
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      Alert.alert('Share Error', 'Failed to share the file.');
+    }
+  };
+
+  const handleViewReport = (report: Report) => {
+    setViewingReport(report);
+    setPdfLoading(true);
+    setPdfError(null);
+    setCurrentPage(1);
+    setTotalPages(0);
+  };
+
+  const closePdfViewer = () => {
+    setViewingReport(null);
+    setPdfLoading(false);
+    setPdfError(null);
+  };
+
+  const onPdfLoadComplete = (numberOfPages: number) => {
+    setPdfLoading(false);
+    setTotalPages(numberOfPages);
+    console.log(`PDF loaded with ${numberOfPages} pages`);
+  };
+
+  const onPdfPageChanged = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const onPdfError = (error: any) => {
+    setPdfLoading(false);
+    setPdfError('Failed to load PDF. Please check the file and try again.');
+    console.error('PDF Error:', error);
+  };
+
+  const handleOpenExternal = async (report: Report) => {
+    try {
+      let pdfUri: string;
+      if (typeof report.pdfPath === 'number') {
+        const asset = Asset.fromModule(report.pdfPath);
+        pdfUri = asset.uri;
+      } else {
+        pdfUri = report.pdfPath;
+      }
+      await Linking.openURL(pdfUri);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open PDF in external app.');
+    }
   };
 
   return (
@@ -171,14 +300,28 @@ export default function ReportsScreen() {
             </View>
 
             <View style={styles.reportActions}>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => handleOpenExternal(report)}>
                 <Eye color="#2563EB" size={18} />
                 <Text style={styles.actionText}>View</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.actionButton}>
-                <Download color="#059669" size={18} />
-                <Text style={styles.actionText}>Download</Text>
+              <TouchableOpacity 
+                style={[styles.actionButton, downloadingId === report.id && styles.disabledButton]}
+                onPress={() => handleDownload(report)}
+                disabled={downloadingId === report.id}>
+                {downloadingId === report.id ? (
+                  <>
+                    <ActivityIndicator size={18} color="#059669" />
+                    <Text style={styles.actionText}>Downloading...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Download color="#059669" size={18} />
+                    <Text style={styles.actionText}>Download</Text>
+                  </>
+                )}
               </TouchableOpacity>
               
               {report.status === 'pending' && (
@@ -191,6 +334,56 @@ export default function ReportsScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* PDF Viewer Modal */}
+      <Modal
+        visible={false}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={closePdfViewer}>
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.pdfHeader}>
+            <View style={styles.pdfHeaderLeft}>
+              <Text style={styles.pdfTitle}>
+                {viewingReport?.reportType}
+              </Text>
+              <Text style={styles.pdfSubtitle}>
+                {viewingReport?.patientName}
+              </Text>
+              {totalPages > 0 && (
+                <Text style={styles.pageInfo}>
+                  Page {currentPage} of {totalPages}
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={closePdfViewer}>
+              <X color="#374151" size={24} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.pdfContainer}>
+            {pdfLoading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#2563EB" />
+                <Text style={styles.loadingText}>Loading PDF...</Text>
+              </View>
+            )}
+            
+            {pdfError && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{pdfError}</Text>
+                <TouchableOpacity 
+                  style={styles.retryButton}
+                  onPress={() => viewingReport && handleViewReport(viewingReport)}>
+                  <Text style={styles.retryText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -204,15 +397,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#E5E7EB',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1F2937',
   },
   headerSubtitle: {
@@ -221,124 +414,210 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   calendarButton: {
-    padding: 12,
-    backgroundColor: '#EBF8FF',
-    borderRadius: 12,
+    padding: 8,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
   },
   filterSection: {
     flexDirection: 'row',
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    gap: 8,
+    gap: 12,
   },
   filterTab: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F1F5F9',
   },
   activeTab: {
     backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
   },
   filterText: {
     fontSize: 14,
-    color: '#6B7280',
     fontWeight: '500',
+    color: '#64748B',
   },
   activeFilterText: {
     color: '#FFFFFF',
   },
   reportCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   reportHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   reportThumbnail: {
     width: 60,
     height: 60,
-    borderRadius: 12,
-    marginRight: 16,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
   },
   reportInfo: {
     flex: 1,
+    marginLeft: 12,
+    justifyContent: 'space-between',
   },
   patientName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 4,
   },
   reportType: {
     fontSize: 14,
-    color: '#059669',
-    fontWeight: '600',
-    marginBottom: 8,
+    color: '#6B7280',
+    marginTop: 2,
   },
   reportMeta: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
   uploadDate: {
     fontSize: 12,
     color: '#6B7280',
-    marginLeft: 6,
   },
   fileSize: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#6B7280',
   },
   reportStatus: {
     alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 6,
     marginBottom: 8,
   },
   statusText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   reportActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    paddingTop: 16,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
+  disabledButton: {
+    opacity: 0.6,
+  },
   actionText: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: '500',
     color: '#374151',
-    marginLeft: 6,
+  },
+  
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  pdfHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  pdfHeaderLeft: {
+    flex: 1,
+  },
+  pdfTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  pdfSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  pageInfo: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  closeButton: {
+    padding: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+  },
+  pdfContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  pdf: {
+    flex: 1,
+    width: width,
+    height: height,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '500',
   },
 });
