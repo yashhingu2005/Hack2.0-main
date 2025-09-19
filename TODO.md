@@ -1,12 +1,17 @@
-# TODO: Implement Post-Signup Onboarding Check
+# TODO: Fix UI of Appointment Request Form Modal in today.tsx
 
 ## Tasks
-- [x] Add `checkPatientOnboardingComplete` function in `contexts/AuthContext.tsx` to check both `profile_completed` and `medical_history_completed` flags
-- [x] Modify `handleSignup` in `app/signup.tsx` to check onboarding status after signup and redirect accordingly
-- [ ] Test the signup flow for patients to ensure onboarding launches when flags are false
-- [ ] Test the signup flow for doctors to ensure no changes in behavior
+- [x] Update modal JSX structure to use modalContainer style for proper background and sizing
+- [x] Move all form content (header, fields, buttons) inside the ScrollView for scrollability
+- [x] Add scrollContent style for consistent padding inside ScrollView
+- [x] Adjust modalContent style to remove conflicting properties (flex: 1)
+- [x] Test modal layout and scrolling on different screen sizes
+- [x] Ensure consistent spacing and alignment throughout the modal
 
-## Details
-- After signup, if user is patient and both profile_completed and medical_history_completed are false, redirect to onboarding page
-- Otherwise, redirect to login page
-- Doctors should not be affected by this change
+## Dependent Files
+- app/(patient)/today.tsx (main file to edit)
+
+## Followup Steps
+- Run the app and test the appointment request modal on different devices
+- Verify form submission still works after UI changes
+- Check for any linting errors or warnings

@@ -121,7 +121,7 @@ export default function AssistantScreen() {
         `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
       ).join('\n');
 
-      const prompt = `You are a helpful health assistant for patients. Provide accurate, helpful information about health topics, but always remind users to consult healthcare professionals for medical advice. Keep responses concise and friendly.
+      const prompt = `You are a helpful health assistant for patients. Provide accurate, helpful information about health topics, but always remind users to consult healthcare professionals for medical advice. Keep responses concise and friendly and bulleted no long paragraphs and give basic prescriptions but not heavy doses and keep the disclaimer clear
 
 Previous conversation:
 ${conversationHistory}

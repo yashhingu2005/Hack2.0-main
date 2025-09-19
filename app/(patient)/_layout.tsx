@@ -61,14 +61,12 @@ export default function PatientLayout() {
         }}
       />
       <Tabs.Screen
-        name="pharmacy"
+        name="profile"
         options={{
-          title: 'Pharmacy',
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={28} />
-          ),
-        }}
-      />
+          href: null,
+          
+        }}
+      />
       <Tabs.Screen
         name="sos"
         options={{
@@ -76,12 +74,7 @@ export default function PatientLayout() {
         }}
       />
 
-<Tabs.Screen
-        name="profile"
-        options={{
-          href: null, // This hides the tab from the tab bar
-        }}
-      />
+
       <Tabs.Screen
         name="onboarding"
         options={{
@@ -94,12 +87,7 @@ export default function PatientLayout() {
           href: null, // This hides the tab from the tab bar
         }}
       />
-      <Tabs.Screen
-        name="records"
-        options={{
-          href: null, // This hides the tab from the tab bar
-        }}
-      />
+      
     </Tabs>
   );
 }
