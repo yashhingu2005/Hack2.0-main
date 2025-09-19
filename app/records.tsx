@@ -19,6 +19,7 @@ import { FileText, Camera as CameraIcon, X, CheckCircle } from 'lucide-react-nat
 import { LineChart } from 'react-native-chart-kit';
 import { supabase } from '@/lib/supabase';
 import { AuthContext } from '@/contexts/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface HealthReading {
   id: string;
@@ -57,19 +58,19 @@ export default function RecordsScreen() {
       datasets: [
         {
           data: bpReadings.map(r => r.systolic || 0),
-          color: () => '#10B981',
+          color: () => '#00B3FF',
           strokeWidth: 2,
           label: 'Systolic',
         },
         {
           data: bpReadings.map(r => r.diastolic || 0),
-          color: () => '#059669',
+          color: () => '#3366FF',
           strokeWidth: 2,
           label: 'Diastolic',
         },
         {
           data: bgReadings.map(r => r.glucose || 0),
-          color: () => '#2563EB',
+          color: () => '#5603BD',
           strokeWidth: 2,
           label: 'Blood Glucose',
         },
@@ -81,7 +82,7 @@ export default function RecordsScreen() {
   const chartConfig = {
     backgroundGradientFrom: '#FFFFFF',
     backgroundGradientTo: '#FFFFFF',
-    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+    color: (opacity = 1) => `rgba(0, 179, 255, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(55, 65, 81, ${opacity})`,
     strokeWidth: 2,
     barPercentage: 0.5,
@@ -365,7 +366,7 @@ If you cannot clearly identify the readings, set confidence to 0.`;
       <View style={styles.readingHeader}>
         <Text style={styles.readingType}>
           {item.type === 'blood_pressure' ? 'Blood Pressure' :
-           item.type === 'blood_glucose' ? 'Blood Glucose' : 'Other'}
+            item.type === 'blood_glucose' ? 'Blood Glucose' : 'Other'}
         </Text>
         <TouchableOpacity onPress={() => deleteReading(item.id)}>
           <X color="#EF4444" size={20} />
@@ -376,8 +377,8 @@ If you cannot clearly identify the readings, set confidence to 0.`;
         {item.type === 'blood_pressure'
           ? `${item.systolic}/${item.diastolic} ${item.unit}`
           : item.type === 'blood_glucose'
-          ? `${item.glucose} ${item.unit}`
-          : 'N/A'
+            ? `${item.glucose} ${item.unit}`
+            : 'N/A'
         }
       </Text>
 
@@ -426,19 +427,23 @@ If you cannot clearly identify the readings, set confidence to 0.`;
         {/* Action Buttons */}
         <View style={styles.actionContainer}>
           <TouchableOpacity
-            style={styles.actionButton}
             onPress={() => setCameraVisible(true)}
+            style={styles.actionButtonWrapper}
           >
-            <CameraIcon color="#FFFFFF" size={24} />
-            <Text style={styles.actionButtonText}>Take Photo</Text>
+            <LinearGradient colors={["#00B3FF", "#5603BD"]} style={styles.actionButton}>
+              <CameraIcon color="#FFFFFF" size={24} />
+              <Text style={styles.actionButtonText}>Take Photo</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.actionButton}
             onPress={pickImage}
+            style={styles.actionButtonWrapper}
           >
-            <FileText color="#FFFFFF" size={24} />
-            <Text style={styles.actionButtonText}>Select Image</Text>
+            <LinearGradient colors={["#00B3FF", "#5603BD"]} style={styles.actionButton}>
+              <FileText color="#FFFFFF" size={24} />
+              <Text style={styles.actionButtonText}>Select Image</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -447,32 +452,63 @@ If you cannot clearly identify the readings, set confidence to 0.`;
           <Text style={styles.sectionTitle}>Reading Type</Text>
           <View style={styles.typeButtons}>
             <TouchableOpacity
-              style={[styles.typeButton, selectedType === 'blood_pressure' && styles.typeButtonActive]}
+              style={styles.typeButton}
               onPress={() => setSelectedType('blood_pressure')}
             >
-              <Text style={[styles.typeButtonText, selectedType === 'blood_pressure' && styles.typeButtonTextActive]}>
-                Blood Pressure
-              </Text>
+              <LinearGradient
+                colors={selectedType === 'blood_pressure' ? ['#00B3FF', '#5603BD'] : ['#F5F5F5', '#F5F5F5']}
+                style={styles.gradientButton}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={[
+                  styles.typeButtonText,
+                  selectedType === 'blood_pressure' && styles.typeButtonTextActive
+                ]}>
+                  Blood Pressure
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.typeButton, selectedType === 'blood_glucose' && styles.typeButtonActive]}
+              style={styles.typeButton}
               onPress={() => setSelectedType('blood_glucose')}
             >
-              <Text style={[styles.typeButtonText, selectedType === 'blood_glucose' && styles.typeButtonTextActive]}>
-                Blood Glucose
-              </Text>
+              <LinearGradient
+                colors={selectedType === 'blood_glucose' ? ['#00B3FF', '#5603BD'] : ['#F5F5F5', '#F5F5F5']}
+                style={styles.gradientButton}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={[
+                  styles.typeButtonText,
+                  selectedType === 'blood_glucose' && styles.typeButtonTextActive
+                ]}>
+                  Blood Glucose
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.typeButton, selectedType === 'other' && styles.typeButtonActive]}
+              style={styles.typeButton}
               onPress={() => setSelectedType('other')}
             >
-              <Text style={[styles.typeButtonText, selectedType === 'other' && styles.typeButtonTextActive]}>
-                Other
-              </Text>
+              <LinearGradient
+                colors={selectedType === 'other' ? ['#00B3FF', '#5603BD'] : ['#F5F5F5', '#F5F5F5']}
+                style={styles.gradientButton}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={[
+                  styles.typeButtonText,
+                  selectedType === 'other' && styles.typeButtonTextActive
+                ]}>
+                  Other
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
-
         {/* Readings List */}
         <View style={styles.readingsContainer}>
           <Text style={styles.sectionTitle}>Recent Readings</Text>
@@ -592,7 +628,7 @@ If you cannot clearly identify the readings, set confidence to 0.`;
       <Modal visible={processing} transparent animationType="fade">
         <View style={styles.processingOverlay}>
           <View style={styles.processingContainer}>
-            <ActivityIndicator size="large" color="#10B981" />
+            <ActivityIndicator size="large" color="#00B3FF" />
             <Text style={styles.processingText}>Analyzing image...</Text>
             <Text style={styles.processingSubtext}>This may take a few seconds</Text>
           </View>
@@ -652,8 +688,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timingButtonActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+    backgroundColor: '#00B3FF',
+    borderColor: '#00B3FF',
   },
   timingButtonText: {
     fontSize: 16,
@@ -664,7 +700,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   confirmButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#00B3FF',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -708,13 +744,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 30,
   },
-  actionButton: {
+  actionButtonWrapper: {
     flex: 1,
-    backgroundColor: '#10B981',
+    marginHorizontal: 8,
+  },
+  actionButton: {
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 8,
     flexDirection: 'row',
     justifyContent: 'center',
   },
@@ -725,36 +762,42 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   typeContainer: {
-    marginBottom: 30,
+    marginVertical: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#333',
   },
   typeButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   typeButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
+    borderRadius: 12,
+    overflow: 'hidden',
     marginHorizontal: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  typeButtonActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+  gradientButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
   },
   typeButtonText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#666',
+    textAlign: 'center',
   },
   typeButtonTextActive: {
     color: '#FFFFFF',
@@ -787,7 +830,7 @@ const styles = StyleSheet.create({
   readingValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#10B981',
+    color: '#00B3FF',
     marginBottom: 4,
   },
   readingTime: {
@@ -796,7 +839,7 @@ const styles = StyleSheet.create({
   },
   mealTimingText: {
     fontSize: 14,
-    color: '#059669',
+    color: '#5603BD',
     fontWeight: '500',
     marginBottom: 4,
   },
@@ -892,7 +935,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   permissionButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#00B3FF',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

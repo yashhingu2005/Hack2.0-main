@@ -26,7 +26,9 @@ import {
   Activity,
   Brain,
   Eye,
-  Stethoscope
+  Stethoscope,
+  Search,
+  ArrowLeft
 } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
@@ -58,7 +60,7 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '1',
     doctorName: 'Dr. Priya Sharma',
-    doctorSpecialty: 'Cardiologist',
+    doctorSpecialty: 'Cardiology',
     date: '2025-08-15',
     medicines: ['Telma 40mg - Take once daily on empty stomach', 'Glycomet 500mg - Take twice daily with meals'],
     instructions: 'Take medications with food. Monitor blood pressure daily. Follow up in 2 weeks.',
@@ -67,7 +69,7 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '2',
     doctorName: 'Dr. Rajesh Gupta',
-    doctorSpecialty: 'Cardiologist',
+    doctorSpecialty: 'Cardiology',
     date: '2025-07-20',
     medicines: ['Losar 50mg - Take once daily', 'Ecosprin 75mg - Take after dinner'],
     instructions: 'Continue current medication. Reduce salt intake. Avoid oily and spicy foods.',
@@ -76,7 +78,7 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '3',
     doctorName: 'Dr. Sunita Patel',
-    doctorSpecialty: 'Cardiologist',
+    doctorSpecialty: 'Cardiology',
     date: '2025-06-10',
     medicines: ['Atorva 20mg - Take at bedtime'],
     instructions: 'Can be taken with or without food. Get cholesterol test done monthly.',
@@ -85,7 +87,7 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '4',
     doctorName: 'Dr. Amit Singh',
-    doctorSpecialty: 'Oncologist',
+    doctorSpecialty: 'Oncology',
     date: '2025-08-25',
     medicines: ['Nolvadex 20mg - Take daily at same time', 'Ondansetron 8mg - Take when nauseous'],
     instructions: 'Take Nolvadx at the same time daily. Use Ondansetron only when experiencing nausea.',
@@ -94,7 +96,7 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '5',
     doctorName: 'Dr. Kavita Joshi',
-    doctorSpecialty: 'Oncologist',
+    doctorSpecialty: 'Oncology',
     date: '2025-07-30',
     medicines: ['Perinorm 10mg - Take before meals'],
     instructions: 'Take 30 minutes before meals. Contact immediately if severe side effects occur.',
@@ -103,7 +105,7 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '6',
     doctorName: 'Dr. Manoj Kumar',
-    doctorSpecialty: 'Neurologist',
+    doctorSpecialty: 'Neurology',
     date: '2025-08-20',
     medicines: ['Gabapin 300mg - Take three times daily', 'Neurobion Forte - Take once daily'],
     instructions: 'Gradually increase dosage as tolerated. Take with food to avoid stomach upset.',
@@ -112,29 +114,60 @@ const dummyPrescriptions: Prescription[] = [
   {
     id: '7',
     doctorName: 'Dr. Deepika Agarwal',
-    doctorSpecialty: 'Dermatologist',
+    doctorSpecialty: 'Dermatology',
     date: '2025-08-10',
     medicines: ['Tretinoin 0.025% - Apply at night', 'Sunscreen SPF 30 - Apply daily'],
     instructions: 'Apply Tretinoin sparingly. Always use sunscreen during the day.',
     status: 'active'
+  },
+  {
+    id: '8',
+    doctorName: 'Dr. Suresh Reddy',
+    doctorSpecialty: 'Orthopedics',
+    date: '2025-08-12',
+    medicines: ['Diclofenac 50mg - Take twice daily', 'Calcium tablets - Take once daily'],
+    instructions: 'Take after meals. Avoid heavy lifting. Physical therapy recommended.',
+    status: 'active'
+  },
+  {
+    id: '9',
+    doctorName: 'Dr. Anita Mehta',
+    doctorSpecialty: 'Pediatrics',
+    date: '2025-08-08',
+    medicines: ['Paracetamol syrup - 5ml twice daily', 'Vitamin D drops - 2 drops daily'],
+    instructions: 'Give with food. Ensure adequate fluid intake. Follow vaccination schedule.',
+    status: 'active'
+  },
+  {
+    id: '10',
+    doctorName: 'Dr. Ravi Sharma',
+    doctorSpecialty: 'Ophthalmology',
+    date: '2025-08-05',
+    medicines: ['Eye drops - 2 drops twice daily', 'Lubricant drops - As needed'],
+    instructions: 'Wash hands before applying drops. Avoid rubbing eyes. Regular eye check-ups.',
+    status: 'active'
   }
 ];
 
-
-// Specialty icons and colors mapping
-const specialtyConfig: { [key: string]: { icon: any, color: string } } = {
-  'Cardiologist': { icon: Heart, color: '#EF4444' },
-  'Oncologist': { icon: Activity, color: '#8B5CF6' },
-  'Neurologist': { icon: Brain, color: '#06B6D4' },
-  'Dermatologist': { icon: Eye, color: '#F59E0B' },
-  'General': { icon: Stethoscope, color: '#10B981' }
+// Updated specialty configuration with more specialties and better icons
+const specialtyConfig: { [key: string]: { icon: any, color: string, bgColor: string } } = {
+  'Cardiology': { icon: Heart, color: '#EF4444', bgColor: '#FEE2E2' },
+  'Oncology': { icon: Activity, color: '#8B5CF6', bgColor: '#F3E8FF' },
+  'Neurology': { icon: Brain, color: '#06B6D4', bgColor: '#ECFEFF' },
+  'Dermatology': { icon: Eye, color: '#F59E0B', bgColor: '#FEF3C7' },
+  'Orthopedics': { icon: Stethoscope, color: '#10B981', bgColor: '#D1FAE5' },
+  'Pediatrics': { icon: Heart, color: '#F97316', bgColor: '#FED7AA' },
+  'Ophthalmology': { icon: Eye, color: '#EC4899', bgColor: '#FCE7F3' },
+  'Psychiatry': { icon: Brain, color: '#7C3AED', bgColor: '#EDE9FE' },
+  'Pathology': { icon: Activity, color: '#DC2626', bgColor: '#FEE2E2' },
+  'General': { icon: Stethoscope, color: '#6B7280', bgColor: '#F3F4F6' }
 };
 
 export default function PrescriptionsScreen() {
   const { user } = useContext(AuthContext);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedSpecialties, setExpandedSpecialties] = useState<Set<string>>(new Set());
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
 
   const fetchPrescriptions = async () => {
     if (!user) return;
@@ -152,7 +185,6 @@ export default function PrescriptionsScreen() {
 
       if (error) {
         console.error('Error fetching prescriptions:', error);
-        // Use dummy data if there's an error
         setPrescriptions(dummyPrescriptions);
       } else if (data && data.length > 0) {
         const mappedPrescriptions: Prescription[] = data.map((pres: any) => ({
@@ -166,12 +198,10 @@ export default function PrescriptionsScreen() {
         }));
         setPrescriptions(mappedPrescriptions);
       } else {
-        // Use dummy data if no data is returned
         setPrescriptions(dummyPrescriptions);
       }
     } catch (error) {
       console.error('Unexpected error fetching prescriptions:', error);
-      // Use dummy data on unexpected error
       setPrescriptions(dummyPrescriptions);
     } finally {
       setLoading(false);
@@ -198,24 +228,14 @@ export default function PrescriptionsScreen() {
       specialty,
       prescriptions,
       icon: specialtyConfig[specialty]?.icon || specialtyConfig['General'].icon,
-      color: specialtyConfig[specialty]?.color || specialtyConfig['General'].color
+      color: specialtyConfig[specialty]?.color || specialtyConfig['General'].color,
+      bgColor: specialtyConfig[specialty]?.bgColor || specialtyConfig['General'].bgColor
     }));
   }, [prescriptions]);
-
-  const toggleSpecialty = (specialty: string) => {
-    const newExpanded = new Set(expandedSpecialties);
-    if (newExpanded.has(specialty)) {
-      newExpanded.delete(specialty);
-    } else {
-      newExpanded.add(specialty);
-    }
-    setExpandedSpecialties(newExpanded);
-  };
 
   const isDoctorInterface = user?.role === 'doctor';
 
   if (isDoctorInterface) {
-    // Doctor's common prescriptions view (unchanged)
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -258,119 +278,120 @@ export default function PrescriptionsScreen() {
     );
   }
 
-  // Patient's containerized prescriptions view
+  // If a specialty is selected, show detailed view
+  if (selectedSpecialty) {
+    const selectedContainer = groupedPrescriptions.find(c => c.specialty === selectedSpecialty);
+    if (!selectedContainer) return null;
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.detailHeader}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => setSelectedSpecialty(null)}
+          >
+            <ArrowLeft color="#111827" size={24} />
+          </TouchableOpacity>
+          <Text style={styles.detailHeaderTitle}>{selectedSpecialty}</Text>
+          <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
+            <AlertTriangle color="#FFFFFF" size={20} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {selectedContainer.prescriptions.map((prescription) => (
+            <View key={prescription.id} style={styles.prescriptionCard}>
+              <View style={styles.prescriptionHeader}>
+                <Image
+                  source={{ uri: 'https://images.pexels.com/photos/5452293/pexels-photo-5452293.jpeg' }}
+                  style={styles.doctorAvatar}
+                />
+                <View style={styles.doctorInfo}>
+                  <Text style={styles.doctorName}>{prescription.doctorName}</Text>
+                  <View style={styles.dateContainer}>
+                    <Clock color="#6B7280" size={14} />
+                    <Text style={styles.prescriptionDate}>
+                      {new Date(prescription.date).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[
+                  styles.statusBadge,
+                  { backgroundColor: prescription.status === 'active' ? '#D1FAE5' : '#F3F4F6' }
+                ]}>
+                  <Text style={[
+                    styles.statusText,
+                    { color: prescription.status === 'active' ? '#059669' : '#6B7280' }
+                  ]}>
+                    {prescription.status === 'active' ? 'ACTIVE' : 'COMPLETED'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.medicinesSection}>
+                <Text style={styles.medicinesTitle}>Medicines:</Text>
+                {prescription.medicines.map((medicine, index) => (
+                  <View key={index} style={styles.medicineItem}>
+                    <Text style={styles.medicineText}>• {medicine}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.instructions}>{prescription.instructions}</Text>
+
+              <View style={styles.prescriptionActions}>
+                <TouchableOpacity style={styles.actionButton}>
+                  <Download color="#2563EB" size={20} />
+                  <Text style={styles.actionButtonText}>Download</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton}>
+                  <Send color="#059669" size={20} />
+                  <Text style={styles.actionButtonText}>Send to Pharmacy</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Main grid view (similar to "Find Your Doctor" layout)
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>My Consultations</Text>
-          <Text style={styles.headerSubtitle}>
-            {groupedPrescriptions.length} specialties • {prescriptions.length} total prescriptions
-          </Text>
-        </View>
+      <View style={styles.gridHeader}>
+        <TouchableOpacity style={styles.backButton}>
+          <ArrowLeft color="#111827" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.gridHeaderTitle}>My Prescriptions</Text>
         <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
-          <AlertTriangle color="#FFFFFF" size={24} />
+          <AlertTriangle color="#FFFFFF" size={20} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {groupedPrescriptions.map((container) => {
-          const IconComponent = container.icon;
-          const isExpanded = expandedSpecialties.has(container.specialty);
-          
-          return (
-            <View key={container.specialty} style={styles.specialtyContainer}>
-              {/* Specialty Header */}
+      <ScrollView style={styles.gridContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.specialtyGrid}>
+          {groupedPrescriptions.map((container) => {
+            const IconComponent = container.icon;
+            
+            return (
               <TouchableOpacity
-                style={styles.specialtyHeader}
-                onPress={() => toggleSpecialty(container.specialty)}
+                key={container.specialty}
+                style={styles.specialtyGridItem}
+                onPress={() => setSelectedSpecialty(container.specialty)}
               >
-                <View style={styles.specialtyHeaderLeft}>
-                  <View style={[styles.specialtyIconContainer, { backgroundColor: `${container.color}20` }]}>
-                    <IconComponent color={container.color} size={24} />
-                  </View>
-                  <View style={styles.specialtyInfo}>
-                    <Text style={styles.specialtyTitle}>{container.specialty}</Text>
-                    <Text style={styles.specialtyCount}>
-                      {container.prescriptions.length} prescription{container.prescriptions.length > 1 ? 's' : ''}
-                    </Text>
-                  </View>
+                <View style={[styles.specialtyGridIcon, { backgroundColor: container.bgColor }]}>
+                  <IconComponent color={container.color} size={32} />
                 </View>
-                <View style={styles.specialtyHeaderRight}>
-                  <View style={[styles.activeCount, { backgroundColor: container.color }]}>
-                    <Text style={styles.activeCountText}>
-                      {container.prescriptions.filter(p => p.status === 'active').length}
-                    </Text>
-                  </View>
-                  {isExpanded ? (
-                    <ChevronDown color="#6B7280" size={20} />
-                  ) : (
-                    <ChevronRight color="#6B7280" size={20} />
-                  )}
-                </View>
+                <Text style={styles.specialtyGridLabel}>{container.specialty}</Text>
+                <Text style={styles.specialtyGridCount}>
+                  {container.prescriptions.length} prescription{container.prescriptions.length > 1 ? 's' : ''}
+                </Text>
               </TouchableOpacity>
-
-              {/* Expanded Prescriptions */}
-              {isExpanded && (
-                <View style={styles.prescriptionsContainer}>
-                  {container.prescriptions.map((prescription) => (
-                    <View key={prescription.id} style={styles.prescriptionCard}>
-                      <View style={styles.prescriptionHeader}>
-                        <Image
-                          source={{ uri: 'https://images.pexels.com/photos/5452293/pexels-photo-5452293.jpeg' }}
-                          style={styles.doctorAvatar}
-                        />
-                        <View style={styles.doctorInfo}>
-                          <Text style={styles.doctorName}>{prescription.doctorName}</Text>
-                          <View style={styles.dateContainer}>
-                            <Clock color="#6B7280" size={14} />
-                            <Text style={styles.prescriptionDate}>
-                              {new Date(prescription.date).toLocaleDateString()}
-                            </Text>
-                          </View>
-                        </View>
-                        <View style={[
-                          styles.statusBadge,
-                          { backgroundColor: prescription.status === 'active' ? '#D1FAE5' : '#F3F4F6' }
-                        ]}>
-                          <Text style={[
-                            styles.statusText,
-                            { color: prescription.status === 'active' ? '#059669' : '#6B7280' }
-                          ]}>
-                            {prescription.status === 'active' ? 'ACTIVE' : 'COMPLETED'}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.medicinesSection}>
-                        <Text style={styles.medicinesTitle}>Medicines:</Text>
-                        {prescription.medicines.map((medicine, index) => (
-                          <View key={index} style={styles.medicineItem}>
-                            <Text style={styles.medicineText}>• {medicine}</Text>
-                          </View>
-                        ))}
-                      </View>
-
-                      <Text style={styles.instructions}>{prescription.instructions}</Text>
-
-                      <View style={styles.prescriptionActions}>
-                        <TouchableOpacity style={styles.actionButton}>
-                          <Download color="#2563EB" size={20} />
-                          <Text style={styles.actionButtonText}>Download</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.actionButton}>
-                          <Send color="#059669" size={20} />
-                          <Text style={styles.actionButtonText}>Send to Pharmacy</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          );
-        })}
+            );
+          })}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -381,6 +402,84 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
+  
+  // Grid Header Styles (similar to "Find Your Doctor")
+  gridHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  backButton: {
+    padding: 8,
+  },
+  gridHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  
+  // Grid Content Styles
+  gridContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  specialtyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+  },
+  specialtyGridItem: {
+    width: '30%',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  specialtyGridIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    position: 'relative',
+  },
+
+  specialtyGridLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  specialtyGridCount: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  
+  // Detail View Header
+  detailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  detailHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  
+  // Original styles for other components
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -417,8 +516,8 @@ const styles = StyleSheet.create({
   },
   sosButton: {
     backgroundColor: '#DC2626',
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 10,
   },
   content: {
     flex: 1,
@@ -426,83 +525,19 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   
-  // Specialty Container Styles
-  specialtyContainer: {
+  // Prescription Card Styles
+  prescriptionCard: {
     backgroundColor: '#FFFFFF',
+    padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    overflow: 'hidden',
+    borderLeftWidth: 3,
+    borderLeftColor: '#059669',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-  },
-  specialtyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  specialtyHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  specialtyIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  specialtyInfo: {
-    flex: 1,
-  },
-  specialtyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  specialtyCount: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
-  },
-  specialtyHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  activeCount: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  activeCountText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  
-  // Prescriptions Container
-  prescriptionsContainer: {
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingTop: 8,
-  },
-  prescriptionCard: {
-    padding: 16,
-    marginHorizontal: 8,
-    marginBottom: 8,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#059669',
   },
   prescriptionHeader: {
     flexDirection: 'row',
@@ -578,7 +613,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#E5E7EB',
