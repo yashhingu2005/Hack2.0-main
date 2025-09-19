@@ -100,7 +100,7 @@ export default function AppointmentsScreen() {
   const [activeTab, setActiveTab] = useState<'requests' | 'appointments'>('requests');
 
   // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI('AIzaSyBk0xeFJaXULO12wjE0BtSNC0NiLGorG_0');
+  const genAI = new GoogleGenerativeAI('AIzaSyB6g9OleRTdwB-vLXiFhvD7ESGarPBvqkQ');
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   const fetchAppointmentRequests = async () => {
@@ -143,6 +143,7 @@ export default function AppointmentsScreen() {
         users!appointments_patient_id_fkey(name)
       `)
       .eq('doctor_id', user.id)
+      .neq('status', 'completed') 
       .order('appointment_date', { ascending: false });
 
     if (error) {
@@ -270,37 +271,46 @@ export default function AppointmentsScreen() {
 
   const transcribeAndParseAudio = async (uri: string) => {
     try {
-      // For now, use placeholder transcription
-      // TODO: Implement actual speech-to-text transcription
-      const transcribedText = "Sample transcribed text: Paracetamol 500mg twice daily";
+      // Read the audio file as bytes
+      const response = await fetch(uri);
+      const blob = await response.blob();
 
-      // Use Gemini to parse the transcribed text
-      const prompt = `Parse the following prescription text and extract the medicines and instructions. Return in JSON format with keys "medicines" (array of strings) and "instructions" (string).
+      // React Native Blob does not have arrayBuffer, use FileReader instead
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
 
-Prescription text: ${transcribedText}
+      // Use Gemini to transcribe and parse the audio inline
+      const result = await model.generateContent([
+        'Transcribe this audio clip and extract prescription information. Return in JSON format with keys "medicines" (array of strings) and "instructions" (string).',
+        {
+          inlineData: {
+            mimeType: 'audio/mpeg', // Assuming MP3, adjust if needed
+            data: base64Data,
+          },
+        },
+      ]);
 
-If there are instructions, include them in the instructions field.`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const decodedText = response.text();
+      const responseText = await result.response.text();
 
       let parsedData;
       try {
-        // Remove markdown code blocks if present
-        let jsonText = decodedText.trim();
-        if (jsonText.startsWith('json')) {
-          jsonText = jsonText.replace(/^json\s*/, '').replace(/\s*$/, '');
-        } else if (jsonText.startsWith('')) {
-          jsonText = jsonText.replace(/^\s*/, '').replace(/\s*$/, '');
-        }
+        // Remove markdown code blocks and backticks if present
+        let jsonText = responseText.trim();
+        jsonText = jsonText.replace(/^[`]+/, '').replace(/[`]+$/, '');
         parsedData = JSON.parse(jsonText);
       } catch (parseError) {
         console.error('Error parsing Gemini response:', parseError);
         // Fallback: try to extract information from the raw response
         parsedData = {
           medicines: [],
-          instructions: decodedText || 'Please review the transcription manually.',
+          instructions: responseText || 'Please review the transcription manually.',
         };
       }
 
