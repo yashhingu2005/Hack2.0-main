@@ -10,25 +10,32 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
+// 👇 Import icons
+import { Stethoscope, Calendar, FileText, HeartPulse } from "lucide-react-native";
+
 const { width, height } = Dimensions.get("window");
 
 const slides = [
   {
     heading: "Connect with a trusted professional",
     body: "Book video consultations with doctors that understand your health needs.",
+    icon: <Stethoscope size={150} color="white" strokeWidth={1.5} />,
   },
   {
     heading: "Easy, instant scheduling",
     body: "Find a slot that works best for you and book it instantly.",
+    icon: <Calendar size={150} color="white" strokeWidth={1.5} />,
   },
   {
     heading: "Your health, organized",
     body: "Access your prescriptions and reports on the go.",
+    icon: <FileText size={150} color="white" strokeWidth={1.5} />,
   },
   {
     heading: "Ready to take charge of your health?",
     body: "",
     isFinal: true,
+    icon: <HeartPulse size={150} color="white" strokeWidth={1.5} />,
   },
 ];
 
@@ -68,10 +75,7 @@ export default function LandingScreen() {
   }, [currentIndex]);
 
   return (
-    <LinearGradient
-      colors={["#00B3FF", "#5603BD"]}
-      style={styles.container}
-    >
+    <LinearGradient colors={["#00B3FF", "#5603BD"]} style={styles.container}>
       {/* Persistent Header */}
       <Text style={styles.header}>JeevanSetu</Text>
 
@@ -85,6 +89,9 @@ export default function LandingScreen() {
           },
         ]}
       >
+        {/* 👇 Add Icon */}
+        <View style={styles.iconContainer}>{slides[currentIndex].icon}</View>
+
         <Text style={styles.heading}>{slides[currentIndex].heading}</Text>
         {slides[currentIndex].body !== "" && (
           <Text style={styles.body}>{slides[currentIndex].body}</Text>
@@ -94,7 +101,7 @@ export default function LandingScreen() {
         {slides[currentIndex].isFinal && (
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push("/signup")}
+            onPress={() => router.push("/login")}
           >
             <Text style={styles.buttonText}>Join Now</Text>
           </TouchableOpacity>
@@ -104,13 +111,11 @@ export default function LandingScreen() {
       {/* Dots */}
       <View style={styles.dotsContainer}>
         {slides.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              currentIndex === i && styles.activeDot,
-            ]}
-          />
+          <TouchableOpacity key={i} onPress={() => setCurrentIndex(i)}>
+            <View
+              style={[styles.dot, currentIndex === i && styles.activeDot]}
+            />
+          </TouchableOpacity>
         ))}
       </View>
     </LinearGradient>
@@ -125,7 +130,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   header: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "bold",
     color: "#fff",
     marginTop: 20,
@@ -137,8 +142,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     textAlign: "center",
   },
+  iconContainer: {
+    marginBottom: 30,
+  },
   heading: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: "bold",
     color: "#fff",
     textAlign: "center",
@@ -146,7 +154,7 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   body: {
-    fontSize: 16,
+    fontSize: 24,
     color: "#fff",
     textAlign: "center",
     lineHeight: 22,
@@ -163,7 +171,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#5603BD",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 20,
   },
   dotsContainer: {
     flexDirection: "row",
