@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,14 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { FileText, Camera as CameraIcon, X, CheckCircle } from 'lucide-react-native';
+import { LineChart } from 'react-native-chart-kit';
+import { supabase } from '@/lib/supabase';
+import { AuthContext } from '@/contexts/AuthContext';
 
 interface HealthReading {
   id: string;
@@ -25,17 +29,64 @@ interface HealthReading {
   unit: string;
   timestamp: Date;
   notes?: string;
+  mealTiming?: 'before_meal' | 'after_meal'; // For blood glucose
 }
 
-const GEMINI_API_KEY = 'AIzaSyCBFC_V_C6aoRYnUSDXzkINiymODoGGBJU'; // Replace with your actual API key
+const GEMINI_API_KEY = 'AIzaSyB6g9OleRTdwB-vLXiFhvD7ESGarPBvqkQ'; // Replace with your actual API key
 
 export default function RecordsScreen() {
+  const { user } = useContext(AuthContext);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [readings, setReadings] = useState<HealthReading[]>([]);
   const [selectedType, setSelectedType] = useState<'blood_pressure' | 'blood_glucose' | 'other'>('blood_pressure');
+  const [mealTiming, setMealTiming] = useState<'before_meal' | 'after_meal'>('before_meal');
+  const [showMealTimingModal, setShowMealTimingModal] = useState(false);
+  const [autoTakePicture, setAutoTakePicture] = useState(false);
+  const [tempReading, setTempReading] = useState<any>(null);
   const cameraRef = useRef<CameraView>(null);
+
+  const getChartData = () => {
+    // Prepare data for charting blood pressure and blood glucose separately
+    const bpReadings = readings.filter(r => r.type === 'blood_pressure').slice(0, 10).reverse();
+    const bgReadings = readings.filter(r => r.type === 'blood_glucose').slice(0, 10).reverse();
+
+    return {
+      labels: bpReadings.map(r => r.timestamp.toLocaleDateString()),
+      datasets: [
+        {
+          data: bpReadings.map(r => r.systolic || 0),
+          color: () => '#10B981',
+          strokeWidth: 2,
+          label: 'Systolic',
+        },
+        {
+          data: bpReadings.map(r => r.diastolic || 0),
+          color: () => '#059669',
+          strokeWidth: 2,
+          label: 'Diastolic',
+        },
+        {
+          data: bgReadings.map(r => r.glucose || 0),
+          color: () => '#2563EB',
+          strokeWidth: 2,
+          label: 'Blood Glucose',
+        },
+      ],
+      legend: ['Systolic', 'Diastolic', 'Blood Glucose'],
+    };
+  };
+
+  const chartConfig = {
+    backgroundGradientFrom: '#FFFFFF',
+    backgroundGradientTo: '#FFFFFF',
+    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(55, 65, 81, ${opacity})`,
+    strokeWidth: 2,
+    barPercentage: 0.5,
+    useShadowColorFromDataset: false,
+  };
 
   useEffect(() => {
     (async () => {
@@ -46,27 +97,71 @@ export default function RecordsScreen() {
     loadReadings();
   }, []);
 
+  useEffect(() => {
+    if (cameraVisible && autoTakePicture && cameraRef.current) {
+      const takeAutoPicture = async () => {
+        try {
+          const photo = await cameraRef.current!.takePictureAsync();
+          if (photo?.uri) {
+            processImage(photo.uri);
+          }
+        } catch (error) {
+          console.error('Error taking picture:', error);
+          Alert.alert('Error', 'Failed to take picture');
+        } finally {
+          setAutoTakePicture(false);
+        }
+      };
+      takeAutoPicture();
+    }
+  }, [cameraVisible, autoTakePicture]);
+
   const loadReadings = async () => {
     try {
-      // For now, we'll use a simple in-memory storage
-      // TODO: Implement proper storage solution
-      setReadings([]);
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('health_readings')
+        .select('*')
+        .eq('patient_id', user.id)
+        .order('timestamp', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error loading readings:', error);
+        return;
+      }
+
+      if (data) {
+        // Convert timestamp strings to Date objects
+        const formattedData = data.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp),
+          mealTiming: item.meal_timing,
+        }));
+        setReadings(formattedData);
+      }
     } catch (error) {
       console.error('Error loading readings:', error);
     }
   };
 
-  const saveReadings = async (newReadings: HealthReading[]) => {
-    try {
-      // For now, we'll use a simple in-memory storage
-      // TODO: Implement proper storage solution
-      setReadings(newReadings);
-    } catch (error) {
-      console.error('Error saving readings:', error);
+  const takePicture = async () => {
+    if (selectedType === 'blood_glucose') {
+      setShowMealTimingModal(true);
+    } else if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync();
+        if (photo?.uri) {
+          processImage(photo.uri);
+        }
+      } catch (error) {
+        console.error('Error taking picture:', error);
+        Alert.alert('Error', 'Failed to take picture');
+      }
     }
   };
 
-  const takePicture = async () => {
+  const takePictureFromCamera = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync();
@@ -78,6 +173,35 @@ export default function RecordsScreen() {
         Alert.alert('Error', 'Failed to take picture');
       }
     }
+  };
+
+  const takePictureWithMealTiming = async () => {
+    if (!tempReading || !user) return;
+
+    const { error } = await supabase.from('health_readings').insert({
+      patient_id: user.id,
+      type: tempReading.type,
+      glucose: tempReading.glucose,
+      unit: tempReading.unit,
+      timestamp: tempReading.timestamp.toISOString(),
+      meal_timing: mealTiming,
+    });
+
+    if (error) {
+      console.error('Error saving reading:', error);
+      Alert.alert('Error', 'Failed to save reading');
+    } else {
+      await loadReadings();
+      Alert.alert(
+        'Reading Added',
+        `Successfully added ${tempReading.glucose} ${tempReading.unit} (${mealTiming === 'before_meal' ? 'Before Meal' : 'After Meal'})`,
+        [{ text: 'OK' }]
+      );
+    }
+
+    setTempReading(null);
+    setShowMealTimingModal(false);
+    setMealTiming('before_meal');
   };
 
   const pickImage = async () => {
@@ -147,21 +271,57 @@ If you cannot clearly identify the readings, set confidence to 0.`;
           unit: parsedData.unit || '',
         };
 
+        if (!user) {
+          Alert.alert('Error', 'User not authenticated');
+          return;
+        }
+
         if (parsedData.type === 'blood_pressure') {
           newReading.systolic = parsedData.systolic;
           newReading.diastolic = parsedData.diastolic;
+          const { error } = await supabase.from('health_readings').insert({
+            patient_id: user.id,
+            type: newReading.type,
+            systolic: newReading.systolic,
+            diastolic: newReading.diastolic,
+            unit: newReading.unit,
+            timestamp: newReading.timestamp.toISOString(),
+          });
+          if (error) {
+            console.error('Error saving reading:', error);
+            Alert.alert('Error', 'Failed to save reading');
+          } else {
+            await loadReadings(); // Reload to get updated list
+            Alert.alert(
+              'Reading Added',
+              `Successfully added ${parsedData.systolic}/${parsedData.diastolic} ${parsedData.unit}`,
+              [{ text: 'OK' }]
+            );
+          }
         } else if (parsedData.type === 'blood_glucose') {
           newReading.glucose = parsedData.glucose;
+          setTempReading(newReading);
+          setShowMealTimingModal(true);
+        } else {
+          const { error } = await supabase.from('health_readings').insert({
+            patient_id: user.id,
+            type: newReading.type,
+            glucose: newReading.glucose,
+            unit: newReading.unit,
+            timestamp: newReading.timestamp.toISOString(),
+          });
+          if (error) {
+            console.error('Error saving reading:', error);
+            Alert.alert('Error', 'Failed to save reading');
+          } else {
+            await loadReadings();
+            Alert.alert(
+              'Reading Added',
+              'Successfully added reading',
+              [{ text: 'OK' }]
+            );
+          }
         }
-
-        const updatedReadings = [newReading, ...readings];
-        await saveReadings(updatedReadings);
-
-        Alert.alert(
-          'Reading Added',
-          `Successfully added ${parsedData.type === 'blood_pressure' ? `${parsedData.systolic}/${parsedData.diastolic} ${parsedData.unit}` : parsedData.type === 'blood_glucose' ? `${parsedData.glucose} ${parsedData.unit}` : 'reading'}`,
-          [{ text: 'OK' }]
-        );
       } else {
         Alert.alert(
           'Unable to Read',
@@ -187,8 +347,13 @@ If you cannot clearly identify the readings, set confidence to 0.`;
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            const updatedReadings = readings.filter(r => r.id !== id);
-            await saveReadings(updatedReadings);
+            const { error } = await supabase.from('health_readings').delete().eq('id', id);
+            if (error) {
+              console.error('Error deleting reading:', error);
+              Alert.alert('Error', 'Failed to delete reading');
+            } else {
+              await loadReadings();
+            }
           }
         }
       ]
@@ -215,6 +380,12 @@ If you cannot clearly identify the readings, set confidence to 0.`;
           : 'N/A'
         }
       </Text>
+
+      {item.type === 'blood_glucose' && item.mealTiming && (
+        <Text style={styles.mealTimingText}>
+          {item.mealTiming === 'before_meal' ? 'Before Meal' : 'After Meal'}
+        </Text>
+      )}
 
       <Text style={styles.readingTime}>
         {item.timestamp.toLocaleString()}
@@ -319,6 +490,23 @@ If you cannot clearly identify the readings, set confidence to 0.`;
             />
           )}
         </View>
+
+        {/* Graph Section */}
+        <View style={styles.graphContainer}>
+          <Text style={styles.sectionTitle}>Readings Graph</Text>
+          {readings.length === 0 ? (
+            <Text style={styles.emptyText}>No data to display</Text>
+          ) : (
+            <LineChart
+              data={getChartData()}
+              width={Dimensions.get('window').width - 48} // padding horizontal 24 * 2
+              height={220}
+              chartConfig={chartConfig}
+              bezier
+              style={styles.chartStyle}
+            />
+          )}
+        </View>
       </ScrollView>
 
       {/* Camera Modal */}
@@ -345,13 +533,58 @@ If you cannot clearly identify the readings, set confidence to 0.`;
                 </Text>
               </View>
 
-              <View style={styles.cameraControls}>
-                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                  <View style={styles.captureButtonInner} />
-                </TouchableOpacity>
-              </View>
+              {!autoTakePicture && (
+                <View style={styles.cameraControls}>
+                  <TouchableOpacity style={styles.captureButton} onPress={takePictureFromCamera}>
+                    <View style={styles.captureButtonInner} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </CameraView>
+        </View>
+      </Modal>
+
+      {/* Meal Timing Modal */}
+      <Modal visible={showMealTimingModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Meal Timing</Text>
+              <TouchableOpacity onPress={() => setShowMealTimingModal(false)}>
+                <X color="#6B7280" size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>When was this blood glucose reading taken?</Text>
+
+              <TouchableOpacity
+                style={[styles.timingButton, mealTiming === 'before_meal' && styles.timingButtonActive]}
+                onPress={() => setMealTiming('before_meal')}
+              >
+                <Text style={[styles.timingButtonText, mealTiming === 'before_meal' && styles.timingButtonTextActive]}>
+                  Before Meal
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.timingButton, mealTiming === 'after_meal' && styles.timingButtonActive]}
+                onPress={() => setMealTiming('after_meal')}
+              >
+                <Text style={[styles.timingButtonText, mealTiming === 'after_meal' && styles.timingButtonTextActive]}>
+                  After Meal
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={takePictureWithMealTiming}
+              >
+                <Text style={styles.confirmButtonText}>Take Photo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
 
@@ -373,6 +606,80 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  modalContent: {
+    padding: 20,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 20,
+  },
+  timingButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  timingButtonActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  timingButtonText: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  timingButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  confirmButton: {
+    backgroundColor: '#10B981',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  graphContainer: {
+    marginBottom: 30,
+  },
+  chartStyle: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
   centerContainer: {
     flex: 1,
@@ -486,6 +793,12 @@ const styles = StyleSheet.create({
   readingTime: {
     fontSize: 12,
     color: '#6B7280',
+  },
+  mealTimingText: {
+    fontSize: 14,
+    color: '#059669',
+    fontWeight: '500',
+    marginBottom: 4,
   },
   emptyContainer: {
     alignItems: 'center',

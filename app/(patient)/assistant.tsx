@@ -62,7 +62,7 @@ export default function AssistantScreen() {
   const [showPrescriptions, setShowPrescriptions] = useState(false);
 
   // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI('AIzaSyCBFC_V_C6aoRYnUSDXzkINiymODoGGBJU'); // Replace with your actual Google Gemini API key
+  const genAI = new GoogleGenerativeAI('AIzaSyB6g9OleRTdwB-vLXiFhvD7ESGarPBvqkQ'); // Replace with your actual Google Gemini API key
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const fetchPrescriptions = async () => {
