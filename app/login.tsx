@@ -12,13 +12,12 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight, Eye, EyeOff, Stethoscope } from 'lucide-react-native';
 import { AuthContext } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
-  const { role } = useLocalSearchParams<{ role: string }>();
   const { login, checkPatientOnboarding, user } = useContext(AuthContext);
   const router = useRouter();
 
@@ -37,19 +36,29 @@ export default function LoginScreen() {
     }
 
     try {
-      await login(email, password, role as 'doctor' | 'patient');
+      await login(email, password);
 
-      if (role === 'patient') {
-        const onboardingComplete = await checkPatientOnboarding(user?.id || '');
+      // After successful login, the user object will contain the role from database
+      // The AuthContext will handle redirection based on user role
+      if (user?.role === 'patient') {
+        const onboardingComplete = await checkPatientOnboarding(user.id);
         if (!onboardingComplete) {
           router.replace('/onboarding');
           return;
         }
       }
 
-      router.replace('/');
-    } catch (error) {
-      Alert.alert('Error', 'Invalid credentials');
+      // Redirect based on user role from database
+      if (user?.role === 'patient') {
+        router.replace('/(patient)/today');
+      } else if (user?.role === 'doctor') {
+        router.replace('/(doctor)/appointments');
+      } else {
+        router.replace('/');
+      }
+    } catch (error: any) {
+      console.log('Login error:', error);
+      Alert.alert('Error', error.message || 'Login failed');
     }
   };
 
@@ -163,21 +172,34 @@ export default function LoginScreen() {
                 { width: width * 0.5, paddingVertical: height * 0.018 },
               ]}
             >
-              <Text style={[styles.signInButtonText, { fontSize: width * 0.045 }]}>
+              <Text style={styles.signInButtonText}>
                 {isSignup ? 'Sign Up' : 'Sign In'}
               </Text>
+              <ArrowRight color="#FFFFFF" size={20} />
             </LinearGradient>
           </TouchableOpacity>
 
           {/* Divider */}
           <View style={styles.divider}>
-            <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
-            <Text style={[styles.dividerText, { fontSize: width * 0.035 }]}>OR</Text>
-            <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
+            <View style={styles.dividerLine} />
+            <MaskedView
+              maskElement={<Text style={styles.dividerText}>OR</Text>}
+            >
+              <LinearGradient
+                colors={['#00B3FF', '#5603BD']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.dividerGradient}
+              />
+            </MaskedView>
+            <View style={styles.dividerLine} />
           </View>
 
           {/* Secondary Button */}
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => setIsSignup(!isSignup)}
+          >
             <MaskedView
               maskElement={
                 <Text style={[styles.secondaryButtonText, { fontSize: width * 0.04 }]}>
@@ -222,10 +244,21 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
   },
-  topSection: { flex: 0.35, alignItems: 'center', justifyContent: 'center' },
-  illustrationContainer: { marginBottom: 20 },
-  title: { fontWeight: 'bold', color: '#333', textAlign: 'center' },
-  formSection: { flex: 1, justifyContent: 'center' },
+  topSection: {
+    flex: 0.4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 40,
+    zIndex: 1,
+  },
+  illustrationContainer: { position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
+  title: { fontSize: 32, fontWeight: 'bold', color: '#333', textAlign: 'center' },
+  formSection: {
+    flex: 1,
+    paddingHorizontal: 32,
+    justifyContent: 'center',
+    zIndex: 1
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -243,16 +276,46 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, color: '#333', outlineWidth: 0 },
   eyeIcon: { padding: 4, marginLeft: 10 },
   signInButton: {
-    borderRadius: 25,
-    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 25,
+    width: '100%',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignSelf: 'center',
+  },
+  signInButtonText: { fontSize: 18, fontWeight: '600', color: '#fff', textAlign: 'center' },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 32,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#00B3FF',
+  },
+  dividerGradient: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#9CA3AF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  secondaryButton: {
+    paddingVertical: 16,
     alignItems: 'center',
   },
-  signInButtonText: { fontWeight: '600', color: '#fff', textAlign: 'center' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24 },
-  dividerLine: { flex: 1, height: 1 },
-  dividerText: { marginHorizontal: 16, color: '#9CA3AF', fontWeight: '500' },
-  secondaryButton: { paddingVertical: 12, alignItems: 'center' },
-  secondaryButtonText: { fontWeight: '500', color: '#000' },
-  secondaryGradient: { flex: 1, height: '100%' },
+  secondaryGradient: {
+    flex: 1,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+  },
 });

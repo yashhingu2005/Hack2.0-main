@@ -12,7 +12,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: 'doctor' | 'patient') => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (role: 'doctor' | 'patient') => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'doctor' | 'patient') => Promise<void>;
   logout: () => void;
@@ -113,10 +113,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const login = async (email: string, password: string, role: 'doctor' | 'patient') => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      console.log('Attempting login with:', email, role);
+      console.log('Attempting login with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         console.error('Login error:', error);
@@ -135,9 +135,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('User profile:', userProfile);
         if (!userProfile) {
           throw new Error('User profile not found. Please contact support.');
-        }
-        if (userProfile.role !== role) {
-          throw new Error(`Account role mismatch. This account is registered as ${userProfile.role}, but you're trying to log in as ${role}.`);
         }
         setUser(userProfile);
         console.log('Login successful');

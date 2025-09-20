@@ -119,5 +119,6 @@ export default function PatientLayout() {
       <Tabs.Screen name="onboarding" options={{ href: null }} />
       <Tabs.Screen name="prescriptions" options={{ href: null }} />
     </Tabs>
+    
   );
 }
