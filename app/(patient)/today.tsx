@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import LinearGradient from 'react-native-linear-gradient';
 import {
   View,
   Text,
@@ -10,11 +11,20 @@ import {
   Modal,
   TextInput,
   Alert,
-
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { AuthContext } from '@/contexts/AuthContext';
-import { Calendar, Clock, FileText, AlertTriangle, Plus, X, Pill, User, MapPin } from 'lucide-react-native';
+import {
+  Calendar,
+  Clock,
+  FileText,
+  AlertTriangle,
+  Plus,
+  X,
+  Pill,
+  User,
+  MapPin,
+} from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -27,7 +37,12 @@ const handleSOSPress = () => {
 const GEMINI_API_KEY = 'AIzaSyB6g9OleRTdwB-vLXiFhvD7ESGarPBvqkQ'; // Replace with your actual API key
 
 // Helper function to parse prescription instructions using Gemini AI
-const parsePrescriptionInstructions = async (instructions: string, createdAt: string, currentDay: number, takenOn: string[] = []) => {
+const parsePrescriptionInstructions = async (
+  instructions: string,
+  createdAt: string,
+  currentDay: number,
+  takenOn: string[] = []
+) => {
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -59,7 +74,9 @@ If you cannot determine the dosage or frequency, use default values. If the pres
     const responseText = await result.response.text();
 
     // Parse the JSON response
-    const parsedData = JSON.parse(responseText.replace(/```json\n?|\n?```/g, ''));
+    const parsedData = JSON.parse(
+      responseText.replace(/```json\n?|\n?```/g, '')
+    );
 
     return {
       dosage: parsedData.dosage || '1pill',
@@ -135,8 +152,12 @@ interface Medicine {
 
 export default function TodayScreen() {
   const { user } = useContext(AuthContext);
-  const [appointmentRequests, setAppointmentRequests] = useState<AppointmentRequest[]>([]);
-  const [confirmedAppointments, setConfirmedAppointments] = useState<ConfirmedAppointment[]>([]);
+  const [appointmentRequests, setAppointmentRequests] = useState<
+    AppointmentRequest[]
+  >([]);
+  const [confirmedAppointments, setConfirmedAppointments] = useState<
+    ConfirmedAppointment[]
+  >([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [todaysMedicines, setTodaysMedicines] = useState<Medicine[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
@@ -197,7 +218,8 @@ export default function TodayScreen() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select(`
+        .select(
+          `
           id,
           name,
           doctors (
@@ -205,7 +227,8 @@ export default function TodayScreen() {
             hospital,
             rating
           )
-        `)
+        `
+        )
         .eq('role', 'doctor');
 
       if (error) {
@@ -237,7 +260,8 @@ export default function TodayScreen() {
     try {
       const { data, error } = await supabase
         .from('appointment_requests')
-        .select(`
+        .select(
+          `
           *,
           doctor:doctor_id (
             name,
@@ -245,7 +269,8 @@ export default function TodayScreen() {
               specialty
             )
           )
-        `)
+        `
+        )
         .eq('patient_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -256,7 +281,8 @@ export default function TodayScreen() {
           id: req.id,
           patient_name: req.patient_name,
           doctor_name: req.doctor?.name || 'Unknown Doctor',
-          doctor_specialty: req.doctor?.doctors?.specialty || 'General Medicine',
+          doctor_specialty:
+            req.doctor?.doctors?.specialty || 'General Medicine',
           requested_time: req.requested_time,
           appointment_type: req.appointment_type,
           priority: req.priority,
@@ -281,7 +307,8 @@ export default function TodayScreen() {
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select(`
+        .select(
+          `
           *,
           doctor:doctor_id (
             name,
@@ -292,7 +319,8 @@ export default function TodayScreen() {
           patient:patient_id (
             name
           )
-        `)
+        `
+        )
         .eq('patient_id', user.id)
         .in('status', ['scheduled', 'confirmed'])
         .order('appointment_date', { ascending: true });
@@ -300,19 +328,22 @@ export default function TodayScreen() {
       if (error) {
         console.error('Error fetching confirmed appointments:', error);
       } else if (data) {
-        const mappedAppointments: ConfirmedAppointment[] = data.map((apt: any) => ({
-          id: apt.id,
-          patient_name: apt.patient?.name || 'Unknown Patient',
-          doctor_name: apt.doctor?.name || 'Unknown Doctor',
-          doctor_specialty: apt.doctor?.doctors?.specialty || 'General Medicine',
-          appointment_date: apt.appointment_date,
-          appointment_type: apt.appointment_type,
-          priority: apt.priority,
-          type: apt.type,
-          status: apt.status,
-          symptoms: apt.symptoms || '',
-          notes: apt.notes || '',
-        }));
+        const mappedAppointments: ConfirmedAppointment[] = data.map(
+          (apt: any) => ({
+            id: apt.id,
+            patient_name: apt.patient?.name || 'Unknown Patient',
+            doctor_name: apt.doctor?.name || 'Unknown Doctor',
+            doctor_specialty:
+              apt.doctor?.doctors?.specialty || 'General Medicine',
+            appointment_date: apt.appointment_date,
+            appointment_type: apt.appointment_type,
+            priority: apt.priority,
+            type: apt.type,
+            status: apt.status,
+            symptoms: apt.symptoms || '',
+            notes: apt.notes || '',
+          })
+        );
         setConfirmedAppointments(mappedAppointments);
       }
     } catch (error) {
@@ -327,7 +358,8 @@ export default function TodayScreen() {
     try {
       const { data, error } = await supabase
         .from('prescriptions')
-        .select(`
+        .select(
+          `
           id,
           medicines,
           instructions,
@@ -341,7 +373,8 @@ export default function TodayScreen() {
               specialty
             )
           )
-        `)
+        `
+        )
         .eq('patient_id', user.id)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -358,7 +391,10 @@ export default function TodayScreen() {
         for (const prescription of data) {
           const createdDate = new Date(prescription.created_at);
           const currentDate = new Date();
-          const daysSinceCreated = Math.floor((currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+          const daysSinceCreated = Math.floor(
+            (currentDate.getTime() - createdDate.getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
           const currentDay = daysSinceCreated + 1; // Day 1 is the first day
 
           // Parse instructions using Gemini AI
@@ -371,20 +407,24 @@ export default function TodayScreen() {
 
           // Only include medicines if they should be shown today
           if (parsedInstructions.shouldShow) {
-            prescription.medicines.forEach((medicine: string, index: number) => {
-              const [name] = medicine.split(' - '); // Extract medicine name
-              activeMedicines.push({
-                id: `${prescription.id}-${index}`,
-                name: name.trim(),
-                dosage: parsedInstructions.dosage,
-                frequency: parsedInstructions.frequency,
-                instructions: prescription.instructions,
-                disease: (prescription.doctor as any)?.doctors?.specialty || 'General',
-                prescriptionId: prescription.id,
-                medicineIndex: index,
-                takenToday: false, // Will be updated when marking as taken
-              });
-            });
+            prescription.medicines.forEach(
+              (medicine: string, index: number) => {
+                const [name] = medicine.split(' - '); // Extract medicine name
+                activeMedicines.push({
+                  id: `${prescription.id}-${index}`,
+                  name: name.trim(),
+                  dosage: parsedInstructions.dosage,
+                  frequency: parsedInstructions.frequency,
+                  instructions: prescription.instructions,
+                  disease:
+                    (prescription.doctor as any)?.doctors?.specialty ||
+                    'General',
+                  prescriptionId: prescription.id,
+                  medicineIndex: index,
+                  takenToday: false, // Will be updated when marking as taken
+                });
+              }
+            );
           }
         }
 
@@ -411,8 +451,15 @@ export default function TodayScreen() {
   }, [user]);
 
   const handleAddAppointmentRequest = async () => {
-    if (!user || !appointmentForm.doctor_id || !appointmentForm.requested_time) {
-      Alert.alert('Error', 'Please fill in all required fields (Doctor and Requested Time)');
+    if (
+      !user ||
+      !appointmentForm.doctor_id ||
+      !appointmentForm.requested_time
+    ) {
+      Alert.alert(
+        'Error',
+        'Please fill in all required fields (Doctor and Requested Time)'
+      );
       return;
     }
 
@@ -431,13 +478,16 @@ export default function TodayScreen() {
             notes: appointmentForm.notes,
             status: 'pending',
             consultation_fee: 0,
-          }
+          },
         ])
         .select();
 
       if (error) {
         console.error('Error creating appointment request:', error);
-        Alert.alert('Error', 'Failed to create appointment request. Please try again.');
+        Alert.alert(
+          'Error',
+          'Failed to create appointment request. Please try again.'
+        );
         return;
       }
 
@@ -461,7 +511,12 @@ export default function TodayScreen() {
   };
 
   const handleAddMedicine = () => {
-    if (!medicineForm.name || !medicineForm.dosage || !medicineForm.frequency || !medicineForm.disease) {
+    if (
+      !medicineForm.name ||
+      !medicineForm.dosage ||
+      !medicineForm.frequency ||
+      !medicineForm.disease
+    ) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -478,7 +533,7 @@ export default function TodayScreen() {
       takenToday: false,
     };
 
-    setTodaysMedicines(prev => [...prev, newMedicine]);
+    setTodaysMedicines((prev) => [...prev, newMedicine]);
     setMedicineForm({ name: '', dosage: '', frequency: '', disease: '' });
     setShowMedicineModal(false);
     Alert.alert('Success', 'Medicine added successfully!');
@@ -487,11 +542,19 @@ export default function TodayScreen() {
   const handleMarkMedicineTaken = async (medicine: Medicine) => {
     try {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-      console.log('Marking medicine as taken:', medicine.name, 'prescriptionId:', medicine.prescriptionId);
+      console.log(
+        'Marking medicine as taken:',
+        medicine.name,
+        'prescriptionId:',
+        medicine.prescriptionId
+      );
 
       if (medicine.prescriptionId) {
         // Fetch current taken_on array, append today's date, and update
-        console.log('Fetching current taken_on for prescription:', medicine.prescriptionId);
+        console.log(
+          'Fetching current taken_on for prescription:',
+          medicine.prescriptionId
+        );
 
         const { data: currentPrescription, error: fetchError } = await supabase
           .from('prescriptions')
@@ -501,7 +564,10 @@ export default function TodayScreen() {
 
         if (fetchError) {
           console.error('Error fetching current prescription:', fetchError);
-          Alert.alert('Error', `Failed to fetch prescription: ${fetchError.message}`);
+          Alert.alert(
+            'Error',
+            `Failed to fetch prescription: ${fetchError.message}`
+          );
           return;
         }
 
@@ -509,20 +575,32 @@ export default function TodayScreen() {
         console.log('Current taken_on array:', currentTakenOn);
 
         if (!currentTakenOn.includes(today)) {
-          console.log('Appending date to taken_on for prescription:', medicine.prescriptionId);
+          console.log(
+            'Appending date to taken_on for prescription:',
+            medicine.prescriptionId
+          );
 
-          const { data: updateData, error: updateError } = await supabase.rpc('append_taken_date', {
-            prescription_id: medicine.prescriptionId,
-            new_date: today
-          });
+          const { data: updateData, error: updateError } = await supabase.rpc(
+            'append_taken_date',
+            {
+              prescription_id: medicine.prescriptionId,
+              new_date: today,
+            }
+          );
 
           if (updateError) {
             console.error('Error appending date to taken_on:', updateError);
-            Alert.alert('Error', `Failed to mark medicine as taken: ${updateError.message}`);
+            Alert.alert(
+              'Error',
+              `Failed to mark medicine as taken: ${updateError.message}`
+            );
             return;
           }
 
-          console.log('Date appended successfully, updated taken_on:', updateData);
+          console.log(
+            'Date appended successfully, updated taken_on:',
+            updateData
+          );
         } else {
           console.log('Medicine already marked as taken today');
         }
@@ -533,12 +611,17 @@ export default function TodayScreen() {
       // Update local state to mark as taken
       console.log('Updating local state for medicine:', medicine.id);
       console.log('Current medicines before update:', todaysMedicines);
-      setTodaysMedicines(prev => {
-        const updated = prev.map(m => {
-          console.log('Checking medicine:', m.id, 'vs', medicine.id, 'match:', m.id === medicine.id);
-          return m.id === medicine.id
-            ? { ...m, takenToday: true }
-            : m;
+      setTodaysMedicines((prev) => {
+        const updated = prev.map((m) => {
+          console.log(
+            'Checking medicine:',
+            m.id,
+            'vs',
+            medicine.id,
+            'match:',
+            m.id === medicine.id
+          );
+          return m.id === medicine.id ? { ...m, takenToday: true } : m;
         });
         console.log('Updated medicines state:', updated);
         return updated;
@@ -556,13 +639,18 @@ export default function TodayScreen() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   if (loadingAppointments) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
         <ActivityIndicator size="large" color="#059669" />
       </SafeAreaView>
     );
@@ -574,7 +662,9 @@ export default function TodayScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Today</Text>
-          <Text style={styles.headerSubtitle}>{new Date().toLocaleDateString()}</Text>
+          <Text style={styles.headerSubtitle}>
+            {new Date().toLocaleDateString()}
+          </Text>
         </View>
         <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
           <AlertTriangle color="#FFFFFF" size={24} />
@@ -587,32 +677,61 @@ export default function TodayScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Confirmed Appointments</Text>
             {confirmedAppointments.map((appointment) => (
-              <View key={appointment.id} style={[styles.card, styles.confirmedCard]}>
+              <View
+                key={appointment.id}
+                style={[styles.card, styles.confirmedCard]}
+              >
                 <View style={styles.cardHeader}>
                   <Calendar color="#059669" size={20} />
-                  <Text style={styles.cardTitle}>{appointment.doctor_name}</Text>
-                  <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(appointment.priority) }]}>
-                    <Text style={styles.priorityText}>{appointment.priority.toUpperCase()}</Text>
+                  <Text style={styles.cardTitle}>
+                    {appointment.doctor_name}
+                  </Text>
+                  <View
+                    style={[
+                      styles.priorityBadge,
+                      {
+                        backgroundColor: getPriorityColor(appointment.priority),
+                      },
+                    ]}
+                  >
+                    <Text style={styles.priorityText}>
+                      {appointment.priority.toUpperCase()}
+                    </Text>
                   </View>
                 </View>
                 <View style={styles.cardRow}>
                   <User color="#6B7280" size={16} />
-                  <Text style={styles.cardText}>{appointment.doctor_specialty}</Text>
+                  <Text style={styles.cardText}>
+                    {appointment.doctor_specialty}
+                  </Text>
                 </View>
                 <View style={styles.cardRow}>
                   <Clock color="#6B7280" size={16} />
-                  <Text style={styles.cardText}>{formatDate(appointment.appointment_date)}</Text>
+                  <Text style={styles.cardText}>
+                    {formatDate(appointment.appointment_date)}
+                  </Text>
                 </View>
                 <View style={styles.cardRow}>
                   <MapPin color="#6B7280" size={16} />
-                  <Text style={styles.cardText}>{appointment.appointment_type === 'video' ? 'Video Call' : 'In-Person'}</Text>
+                  <Text style={styles.cardText}>
+                    {appointment.appointment_type === 'video'
+                      ? 'Video Call'
+                      : 'In-Person'}
+                  </Text>
                 </View>
                 {appointment.symptoms && (
-                  <Text style={styles.symptomsText}>Symptoms: {appointment.symptoms}</Text>
+                  <Text style={styles.symptomsText}>
+                    Symptoms: {appointment.symptoms}
+                  </Text>
                 )}
                 <View style={styles.statusContainer}>
                   <Text style={styles.cardText}>Status: </Text>
-                  <Text style={[styles.statusText, { color: getStatusColor(appointment.status) }]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(appointment.status) },
+                    ]}
+                  >
                     {appointment.status.toUpperCase()}
                   </Text>
                 </View>
@@ -625,7 +744,7 @@ export default function TodayScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Appointment Requests</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.addButton}
               onPress={() => setShowAppointmentModal(true)}
             >
@@ -638,31 +757,55 @@ export default function TodayScreen() {
                 <View style={styles.cardHeader}>
                   <Calendar color="#F59E0B" size={20} />
                   <Text style={styles.cardTitle}>{request.doctor_name}</Text>
-                  <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(request.priority) }]}>
-                    <Text style={styles.priorityText}>{request.priority.toUpperCase()}</Text>
+                  <View
+                    style={[
+                      styles.priorityBadge,
+                      { backgroundColor: getPriorityColor(request.priority) },
+                    ]}
+                  >
+                    <Text style={styles.priorityText}>
+                      {request.priority.toUpperCase()}
+                    </Text>
                   </View>
                 </View>
                 <View style={styles.cardRow}>
                   <User color="#6B7280" size={16} />
-                  <Text style={styles.cardText}>{request.doctor_specialty}</Text>
+                  <Text style={styles.cardText}>
+                    {request.doctor_specialty}
+                  </Text>
                 </View>
                 <View style={styles.cardRow}>
                   <Clock color="#6B7280" size={16} />
-                  <Text style={styles.cardText}>Requested: {request.requested_time}</Text>
+                  <Text style={styles.cardText}>
+                    Requested: {request.requested_time}
+                  </Text>
                 </View>
                 <View style={styles.cardRow}>
                   <MapPin color="#6B7280" size={16} />
-                  <Text style={styles.cardText}>{request.appointment_type === 'video' ? 'Video Call' : 'In-Person'}</Text>
+                  <Text style={styles.cardText}>
+                    {request.appointment_type === 'video'
+                      ? 'Video Call'
+                      : 'In-Person'}
+                  </Text>
                 </View>
                 {request.symptoms && (
-                  <Text style={styles.symptomsText}>Symptoms: {request.symptoms}</Text>
+                  <Text style={styles.symptomsText}>
+                    Symptoms: {request.symptoms}
+                  </Text>
                 )}
                 {request.consultation_fee > 0 && (
-                  <Text style={styles.feeText}>Fee: ₹{request.consultation_fee}</Text>
+                  <Text style={styles.feeText}>
+                    Fee: ₹{request.consultation_fee}
+                  </Text>
                 )}
                 <View style={styles.statusContainer}>
                   <Text style={styles.cardText}>Status: </Text>
-                  <Text style={[styles.statusText, { color: getStatusColor(request.status) }]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(request.status) },
+                    ]}
+                  >
                     {request.status.toUpperCase()}
                   </Text>
                 </View>
@@ -677,7 +820,7 @@ export default function TodayScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Today's Medicine</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.addButton}
               onPress={() => setShowMedicineModal(true)}
             >
@@ -688,15 +831,15 @@ export default function TodayScreen() {
             todaysMedicines.map((medicine) => (
               <TouchableOpacity
                 key={medicine.id}
-                style={[
-                  styles.card,
-                  medicine.takenToday && styles.takenCard
-                ]}
+                style={[styles.card, medicine.takenToday && styles.takenCard]}
                 onPress={() => handleMarkMedicineTaken(medicine)}
                 disabled={medicine.takenToday}
               >
                 <View style={styles.cardHeader}>
-                  <Pill color={medicine.takenToday ? "#10B981" : "#8B5CF6"} size={20} />
+                  <Pill
+                    color={medicine.takenToday ? '#10B981' : '#8B5CF6'}
+                    size={20}
+                  />
                   <Text style={styles.cardTitle}>{medicine.name}</Text>
                   {medicine.takenToday && (
                     <View style={styles.takenBadge}>
@@ -705,8 +848,12 @@ export default function TodayScreen() {
                   )}
                 </View>
                 <Text style={styles.cardText}>Dosage: {medicine.dosage}</Text>
-                <Text style={styles.cardText}>Frequency: {medicine.frequency}</Text>
-                <Text style={styles.cardText}>Instructions: {medicine.instructions}</Text>
+                <Text style={styles.cardText}>
+                  Frequency: {medicine.frequency}
+                </Text>
+                <Text style={styles.cardText}>
+                  Instructions: {medicine.instructions}
+                </Text>
                 <Text style={styles.cardText}>For: {medicine.disease}</Text>
                 {!medicine.takenToday && (
                   <Text style={styles.tapHint}>Tap to mark as taken</Text>
@@ -714,7 +861,9 @@ export default function TodayScreen() {
               </TouchableOpacity>
             ))
           ) : (
-            <Text style={styles.emptyText}>No medicines scheduled for today.</Text>
+            <Text style={styles.emptyText}>
+              No medicines scheduled for today.
+            </Text>
           )}
         </View>
       </ScrollView>
@@ -728,13 +877,18 @@ export default function TodayScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
               <View style={styles.modalHeader}>
                 <View style={styles.headerLeft}>
                   <Calendar color="#F59E0B" size={20} />
                   <Text style={styles.modalTitle}>Request Appointment</Text>
                 </View>
-                <TouchableOpacity onPress={() => setShowAppointmentModal(false)}>
+                <TouchableOpacity
+                  onPress={() => setShowAppointmentModal(false)}
+                >
                   <X color="#6B7280" size={24} />
                 </TouchableOpacity>
               </View>
@@ -743,7 +897,12 @@ export default function TodayScreen() {
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={appointmentForm.doctor_id}
-                  onValueChange={(value) => setAppointmentForm(prev => ({...prev, doctor_id: value}))}
+                  onValueChange={(value) =>
+                    setAppointmentForm((prev) => ({
+                      ...prev,
+                      doctor_id: value,
+                    }))
+                  }
                   style={styles.picker}
                 >
                   <Picker.Item label="Choose a doctor..." value="" />
@@ -762,14 +921,24 @@ export default function TodayScreen() {
                 style={styles.input}
                 placeholder="e.g., Tomorrow 2:00 PM or Oct 25, 2024 3:00 PM"
                 value={appointmentForm.requested_time}
-                onChangeText={(text) => setAppointmentForm(prev => ({...prev, requested_time: text}))}
+                onChangeText={(text) =>
+                  setAppointmentForm((prev) => ({
+                    ...prev,
+                    requested_time: text,
+                  }))
+                }
               />
 
               <Text style={styles.fieldLabel}>Appointment Type</Text>
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={appointmentForm.appointment_type}
-                  onValueChange={(value) => setAppointmentForm(prev => ({...prev, appointment_type: value}))}
+                  onValueChange={(value) =>
+                    setAppointmentForm((prev) => ({
+                      ...prev,
+                      appointment_type: value,
+                    }))
+                  }
                   style={styles.picker}
                 >
                   <Picker.Item label="In-Person" value="in-person" />
@@ -781,7 +950,9 @@ export default function TodayScreen() {
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={appointmentForm.priority}
-                  onValueChange={(value) => setAppointmentForm(prev => ({...prev, priority: value}))}
+                  onValueChange={(value) =>
+                    setAppointmentForm((prev) => ({ ...prev, priority: value }))
+                  }
                   style={styles.picker}
                 >
                   <Picker.Item label="Low" value="low" />
@@ -795,7 +966,9 @@ export default function TodayScreen() {
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe your symptoms..."
                 value={appointmentForm.symptoms}
-                onChangeText={(text) => setAppointmentForm(prev => ({...prev, symptoms: text}))}
+                onChangeText={(text) =>
+                  setAppointmentForm((prev) => ({ ...prev, symptoms: text }))
+                }
                 multiline
                 numberOfLines={3}
               />
@@ -805,7 +978,9 @@ export default function TodayScreen() {
                 style={[styles.input, styles.textArea]}
                 placeholder="Any additional information..."
                 value={appointmentForm.notes}
-                onChangeText={(text) => setAppointmentForm(prev => ({...prev, notes: text}))}
+                onChangeText={(text) =>
+                  setAppointmentForm((prev) => ({ ...prev, notes: text }))
+                }
                 multiline
                 numberOfLines={2}
               />
@@ -839,52 +1014,63 @@ export default function TodayScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Medicine</Text>
-              <TouchableOpacity onPress={() => setShowMedicineModal(false)}>
-                <X color="#6B7280" size={24} />
-              </TouchableOpacity>
-            </View>
+            <ScrollView
+              style={styles.modalContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add Medicine</Text>
+                <TouchableOpacity onPress={() => setShowMedicineModal(false)}>
+                  <X color="#6B7280" size={24} />
+                </TouchableOpacity>
+              </View>
             </ScrollView>
-            
+
             <TextInput
               style={styles.input}
               placeholder="Medicine Name"
               value={medicineForm.name}
-              onChangeText={(text) => setMedicineForm(prev => ({...prev, name: text}))}
+              onChangeText={(text) =>
+                setMedicineForm((prev) => ({ ...prev, name: text }))
+              }
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Dosage (e.g., 40mg)"
               value={medicineForm.dosage}
-              onChangeText={(text) => setMedicineForm(prev => ({...prev, dosage: text}))}
+              onChangeText={(text) =>
+                setMedicineForm((prev) => ({ ...prev, dosage: text }))
+              }
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Frequency (e.g., Once daily)"
               value={medicineForm.frequency}
-              onChangeText={(text) => setMedicineForm(prev => ({...prev, frequency: text}))}
+              onChangeText={(text) =>
+                setMedicineForm((prev) => ({ ...prev, frequency: text }))
+              }
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Disease/Condition"
               value={medicineForm.disease}
-              onChangeText={(text) => setMedicineForm(prev => ({...prev, disease: text}))}
+              onChangeText={(text) =>
+                setMedicineForm((prev) => ({ ...prev, disease: text }))
+              }
             />
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShowMedicineModal(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.submitButton}
                 onPress={handleAddMedicine}
               >
@@ -1055,22 +1241,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-  flex: 1,
-  padding: 20,
-},
+    flex: 1,
+    padding: 20,
+  },
   modalContainer: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 12,
-  width: '90%',
-  maxWidth: 400,
-  maxHeight: '80%',
-  overflow: 'hidden',
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 5,
-},
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   scrollContent: {
     padding: 20,
   },

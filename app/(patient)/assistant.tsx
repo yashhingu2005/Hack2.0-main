@@ -184,9 +184,9 @@ Assistant:`;
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Bot color="#10B981" size={28} />
+          <Bot color="#1e58ccff" size={28} />
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Health Assistant</Text>
+            <Text style={styles.headerTitle}>Sahayata</Text>
             <Text style={styles.headerSubtitle}>Ask me anything about your health</Text>
           </View>
         </View>
@@ -223,7 +223,7 @@ Assistant:`;
             <TouchableOpacity
               style={styles.prescriptionsHeader}
               onPress={() => setShowPrescriptions(!showPrescriptions)}>
-              <MessageCircle color="#10B981" size={20} />
+              <MessageCircle color="#1e58ccff" size={20} />
               <Text style={styles.prescriptionsTitle}>Current Prescriptions</Text>
               <Text style={styles.prescriptionsCount}>({prescriptions.length})</Text>
             </TouchableOpacity>
@@ -255,7 +255,7 @@ Assistant:`;
               ]}>
               {message.sender === 'assistant' && (
                 <View style={styles.assistantAvatar}>
-                  <Heart color="#10B981" size={20} />
+                  <Heart color="#1e58ccff" size={20} />
                 </View>
               )}
 
@@ -327,7 +327,7 @@ Assistant:`;
               onPress={sendMessage}
               disabled={!inputText.trim()}>
               <Send
-                color={inputText.trim() ? "#FFFFFF" : "#9CA3AF"}
+                color={inputText.trim() ? "#ffffffff" : "#ffffffff"}
                 size={20}
               />
             </TouchableOpacity>
@@ -495,16 +495,16 @@ const styles = StyleSheet.create({
     paddingLeft: 24,
   },
   quickQuestionButton: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#ced8f7ff',
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#bcd3ffff',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     marginRight: 12,
   },
   quickQuestionText: {
-    color: '#059669',
+    color: '#1e58ccff',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   sendButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#2366ccff',
     padding: 12,
     borderRadius: 20,
     marginLeft: 8,

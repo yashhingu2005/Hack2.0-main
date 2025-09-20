@@ -3,7 +3,7 @@ import { useState } from "react";
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stethoscope } from "lucide-react-native";
+import { Stethoscope, ArrowRight } from "lucide-react-native";
 
 export default function VerificationPage() {
   const router = useRouter();
@@ -39,126 +39,184 @@ export default function VerificationPage() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Background Bubbles */}
-        <View style={styles.bubblesContainer}>
-          <LinearGradient colors={["#00B3FF", "#5603BD"]} style={[styles.bubble, styles.bubbleTopLeft]} />
-          <LinearGradient colors={["#00B3FF", "#5603BD"]} style={[styles.bubble, styles.bubbleBottomRight]} />
-          <LinearGradient colors={["#00B3FF", "#5603BD"]} style={[styles.smallBubble, styles.smallBubbleTop]} />
-          <LinearGradient colors={["#00B3FF", "#5603BD"]} style={[styles.smallBubble, styles.smallBubbleBottom]} />
-        </View>
-
-        {/* Top Section */}
-        <View style={styles.topSection}>
-          <View style={styles.illustrationContainer}>
-            <Stethoscope size={120} color="#666" strokeWidth={1.5} />
-            <View style={styles.decorativeElements}>
-              <View style={[styles.dot, { top: 20, left: 30 }]} />
-              <View style={[styles.dot, { top: 60, right: 40 }]} />
-              <View style={[styles.dot, { bottom: 40, left: 20 }]} />
-              <View style={[styles.smallDot, { top: 80, left: 60 }]} />
-              <View style={[styles.smallDot, { bottom: 20, right: 30 }]} />
+        <View style={styles.content}>
+          {/* Top Section */}
+          <View style={styles.topSection}>
+            <View style={styles.illustrationContainer}>
+              <Stethoscope size={120} color="#5603BD" strokeWidth={1.5} />
             </View>
-          </View>
-          <Text style={styles.title}>Doctor Verification</Text>
-        </View>
-
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Registration No"
-              value={regNo}
-              onChangeText={setRegNo}
-              placeholderTextColor="#9CA3AF"
-            />
+            <Text style={styles.stepTitle}>Doctor Verification</Text>
           </View>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Year of Registration"
-              value={year}
-              onChangeText={setYear}
-              keyboardType="number-pad"
-              placeholderTextColor="#9CA3AF"
-            />
+          {/* Form Section */}
+          <View style={styles.stepContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                Registration Number <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your registration number"
+                value={regNo}
+                onChangeText={setRegNo}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                Year of Registration <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter year of registration"
+                value={year}
+                onChangeText={setYear}
+                keyboardType="number-pad"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                Council Name <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter medical council name"
+                value={council}
+                onChangeText={setCouncil}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            {/* Message */}
+            {msg ? (
+              <View style={styles.messageContainer}>
+                <Text style={styles.msgText}>{msg}</Text>
+              </View>
+            ) : null}
           </View>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Council Name"
-              value={council}
-              onChangeText={setCouncil}
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          {/* Gradient Verify Button */}
-          <TouchableOpacity onPress={handleVerify} style={{ marginVertical: 16 }}>
-            <LinearGradient
-              colors={["#00B3FF", "#5603BD"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.verifyButton}
+          {/* Button Section */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              onPress={handleVerify} 
+              style={[styles.nextButton, (!regNo || !year || !council) && styles.buttonDisabled]}
+              disabled={!regNo || !year || !council}
             >
-              <Text style={styles.verifyButtonText}>Verify</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Message */}
-          {msg ? <Text style={styles.msgText}>{msg}</Text> : null}
+              <LinearGradient
+                colors={["#00B3FF", "#5603BD"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>Verify Doctor</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-
-  bubblesContainer: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    zIndex: 0,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  bubble: { position: "absolute", borderRadius: 200 },
-  bubbleTopLeft: { width: 350, height: 350, top: -90, left: -90 },
-  bubbleBottomRight: { width: 250, height: 250, bottom: -110, right: -110 },
-  smallBubble: { position: "absolute", borderRadius: 100, width: 100, height: 100 },
-  smallBubbleTop: { top: 120, right: 30 },
-  smallBubbleBottom: { bottom: 180, left: 40 },
-
-  topSection: { flex: 0.4, alignItems: "center", justifyContent: "center", paddingTop: 40, zIndex: 1 },
-  illustrationContainer: { position: "relative", alignItems: "center", justifyContent: "center", marginBottom: 30 },
-  decorativeElements: { position: "absolute", width: 200, height: 200 },
-  dot: { position: "absolute", width: 8, height: 8, borderRadius: 4, backgroundColor: "#ddd" },
-  smallDot: { position: "absolute", width: 4, height: 4, borderRadius: 2, backgroundColor: "#ddd" },
-  title: { fontSize: 28, fontWeight: "bold", color: "#333", textAlign: "center" },
-
-  formSection: { flex: 1, paddingHorizontal: 32, justifyContent: "center", transform: [{ translateY: -40 }], zIndex: 1 },
-
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 25,
-    marginBottom: 20,
-    paddingHorizontal: 20,
+  flex: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  topSection: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  illustrationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 30,
+  },
+  stepContainer: {
+    marginBottom: 40,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  stepTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 32,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 24,
+    alignSelf: 'center',
+    width: '70%',
+    top: -40,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  required: {
+    color: '#EF4444',
+  },
+  input: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    fontSize: 16,
+    color: '#374151',
+    width: '100%',
   },
-  input: { flex: 1, fontSize: 16, color: "#333", outlineWidth: 0 },
-
-  verifyButton: { borderRadius: 25, paddingVertical: 16, alignItems: "center" },
-  verifyButtonText: { fontSize: 18, fontWeight: "600", color: "#fff" },
-
-  msgText: { textAlign: "center", fontSize: 16, color: "#333", marginTop: 8 },
+  messageContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  msgText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  buttonContainer: {
+    marginBottom: 40,
+    width: '50%',
+    top: -60,
+    alignSelf: 'center',
+  },
+  nextButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
 });
