@@ -13,11 +13,13 @@
     "@google/genai": "^1.17.0",
     "@google/generative-ai": "^0.24.1",
     "@lucide/lab": "^0.1.2",
+    "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-native-picker/picker": "^2.11.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@supabase/supabase-js": "^2.57.0",
+    "@types/next": "^8.0.7",
     "expo": "^53.0.22",
     "expo-av": "^15.1.7",
     "expo-blur": "~14.1.5",
@@ -39,6 +41,7 @@
     "expo-web-browser": "~14.2.0",
     "lucide-react": "^0.544.0",
     "lucide-react-native": "^0.542.0",
+    "next": "^15.5.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
@@ -53,7 +56,7 @@
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
-    "@react-native-community/datetimepicker": "8.4.1"
+    "react-router-dom": "^7.9.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
