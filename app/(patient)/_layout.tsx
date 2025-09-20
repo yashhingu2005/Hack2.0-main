@@ -17,6 +17,7 @@ export default function PatientLayout() {
         tabBarActiveTintColor: '#5603BD', // active icon outline color
         tabBarInactiveTintColor: '#64748B', // inactive icon outline color
         tabBarStyle: {
+          paddingTop: 10,
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E2E8F0',
@@ -68,7 +69,7 @@ export default function PatientLayout() {
           tabBarIcon: ({ focused }) => (
             <View
               style={{
-                top: -30, // floating effect
+                top: -20, // floating effect
                 justifyContent: 'center',
                 alignItems: 'center',
                 shadowColor: '#000',
@@ -104,7 +105,6 @@ export default function PatientLayout() {
             fontSize: 11,
             fontWeight: '500',
             textAlign: 'center',
-            marginTop: 10, // label below floating button
           },
         }}
       />
