@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 const router = useRouter();
 const handleSOSPress = () => {
-  router.push('/(patient)/sos');
+  router.push('/sos');
 };
 interface Doctor {
   id: string;

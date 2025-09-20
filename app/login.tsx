@@ -64,8 +64,8 @@ export default function LoginScreen() {
           <LinearGradient
             colors={['#00B3FF', '#5603BD']}
             style={[styles.bubble, {
-              width: width * 0.7,
-              height: width * 0.7,
+              width: width * 0.5,
+              height: width * 0.5,
               top: -height * 0.12,
               left: -width * 0.2,
             }]}
@@ -73,8 +73,8 @@ export default function LoginScreen() {
           <LinearGradient
             colors={['#00B3FF', '#5603BD']}
             style={[styles.bubble, {
-              width: width * 0.5,
-              height: width * 0.5,
+              width: width * 0.35,
+              height: width * 0.35,
               bottom: -height * 0.15,
               right: -width * 0.2,
             }]}
@@ -163,37 +163,17 @@ export default function LoginScreen() {
                 { width: width * 0.5, paddingVertical: height * 0.018 },
               ]}
             >
-<<<<<<< Updated upstream
               <Text style={[styles.signInButtonText, { fontSize: width * 0.045 }]}>
                 {isSignup ? 'Sign Up' : 'Sign In'}
               </Text>
-=======
-              <Text style={styles.signInButtonText}>Sign In</Text>
-              <ArrowRight color="#FFFFFF" size={20} />
->>>>>>> Stashed changes
             </LinearGradient>
           </TouchableOpacity>
 
           {/* Divider */}
           <View style={styles.divider}>
-<<<<<<< Updated upstream
             <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
             <Text style={[styles.dividerText, { fontSize: width * 0.035 }]}>OR</Text>
             <LinearGradient colors={['#00B3FF', '#5603BD']} style={styles.dividerLine} />
-=======
-            <View style={styles.dividerLine} />
-            <MaskedView
-              maskElement={<Text style={styles.dividerText}>OR</Text>}
-            >
-              <LinearGradient
-                colors={['#00B3FF', '#5603BD']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.dividerGradient}
-              />
-            </MaskedView>
-            <View style={styles.dividerLine} />
->>>>>>> Stashed changes
           </View>
 
           {/* Secondary Button */}
@@ -242,36 +222,10 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
   },
-<<<<<<< Updated upstream
   topSection: { flex: 0.35, alignItems: 'center', justifyContent: 'center' },
   illustrationContainer: { marginBottom: 20 },
   title: { fontWeight: 'bold', color: '#333', textAlign: 'center' },
   formSection: { flex: 1, justifyContent: 'center' },
-=======
-  smallBubbleTop: { top: 120, right: 30 },
-  smallBubbleBottom: { bottom: 180, left: 40 },
-
-  topSection: {
-    flex: 0.4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 40,
-    zIndex: 1,
-  },
-  illustrationContainer: { position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
-  decorativeElements: { position: 'absolute', width: 200, height: 200 },
-  dot: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#ddd' },
-  smallDot: { position: 'absolute', width: 4, height: 4, borderRadius: 2, backgroundColor: '#ddd' },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#333', textAlign: 'center' },
-
-  formSection: {
-    flex: 1,
-    paddingHorizontal: 32,
-    justifyContent: 'center',
-    zIndex: 1
-  },
-
->>>>>>> Stashed changes
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -289,7 +243,6 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, color: '#333', outlineWidth: 0 },
   eyeIcon: { padding: 4, marginLeft: 10 },
   signInButton: {
-<<<<<<< Updated upstream
     borderRadius: 25,
     alignSelf: 'center',
     justifyContent: 'center',
@@ -301,49 +254,5 @@ const styles = StyleSheet.create({
   dividerText: { marginHorizontal: 16, color: '#9CA3AF', fontWeight: '500' },
   secondaryButton: { paddingVertical: 12, alignItems: 'center' },
   secondaryButtonText: { fontWeight: '500', color: '#000' },
-=======
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 25,
-    width: '100%',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    alignSelf: 'center',
-  },
-  signInButtonText: { fontSize: 18, fontWeight: '600', color: '#fff', textAlign: 'center' },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 32,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#00B3FF',
-  },
-  dividerGradient: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#9CA3AF', // replace with gradient via MaskedView if needed
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  secondaryButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  secondaryGradient: {
-    flex: 1,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000', // replace with gradient if needed
-  },
-  signUpText: { fontSize: 14, color: '#000', textAlign: 'center' },
->>>>>>> Stashed changes
+  secondaryGradient: { flex: 1, height: '100%' },
 });

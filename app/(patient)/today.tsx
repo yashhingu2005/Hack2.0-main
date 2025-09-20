@@ -471,6 +471,7 @@ export default function TodayScreen() {
       name: medicineForm.name,
       dosage: medicineForm.dosage,
       frequency: medicineForm.frequency,
+      instructions: '', // No instructions for manually added medicine
       disease: medicineForm.disease,
       prescriptionId: '',
       medicineIndex: todaysMedicines.length,

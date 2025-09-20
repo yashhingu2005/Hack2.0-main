@@ -16,7 +16,7 @@ import { TriangleAlert as AlertTriangle, Search, MapPin, Phone, Clock, Star, Nav
 const router = useRouter();
 
 const handleSOSPress = () => {
-  router.push('/(patient)/sos');
+  router.push('/sos');
 };
 
 interface Pharmacy {

@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
-<<<<<<< Updated upstream
 import {
   Home,
   FileText,
@@ -14,22 +13,9 @@ export default function PatientLayout() {
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        headerShown: true,
+        headerShown: false,
         tabBarActiveTintColor: '#5603BD', // active icon outline color
         tabBarInactiveTintColor: '#64748B', // inactive icon outline color
-=======
-import { Home, FileText, UserCheck, MessageCircle, User } from 'lucide-react-native';
-import { NavigationBubble } from '@/components/NavigationBubble';
-
-export default function PatientLayout() {
-  return (
-    <>
-      <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#64748B',
->>>>>>> Stashed changes
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
@@ -68,7 +54,6 @@ export default function PatientLayout() {
             default:
               return null;
           }
-          // ✅ No circular background — just change icon color
           return <IconComponent color={color} size={26} />;
         },
       })}
@@ -115,12 +100,11 @@ export default function PatientLayout() {
               </LinearGradient>
             </View>
           ),
-<<<<<<< Updated upstream
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '500',
             textAlign: 'center',
-            marginTop: 36, // label below floating button
+            marginTop: 10, // label below floating button
           },
         }}
       />
@@ -134,24 +118,6 @@ export default function PatientLayout() {
       <Tabs.Screen name="sos" options={{ href: null }} />
       <Tabs.Screen name="onboarding" options={{ href: null }} />
       <Tabs.Screen name="prescriptions" options={{ href: null }} />
-=======
-        }}
-      />
-      <Tabs.Screen
-        name="doctors"
-        options={{
-          title: 'Doctors',
-          tabBarIcon: ({ color, size }) => (
-            <UserCheck color={color} size={28} />
-          ),
-        }}
-      />
-      
-      <NavigationBubble />
-      
-
->>>>>>> Stashed changes
     </Tabs>
-    </>
   );
 }

@@ -9,6 +9,8 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { AuthContext } from '@/contexts/AuthContext';
 import {
@@ -28,14 +30,103 @@ import {
   Eye,
   Stethoscope,
   Search,
-  ArrowLeft
+  ArrowLeft,
+  Menu,
+  X,
+  Settings,
+  Info,
+  Phone,
+  UserCheck,
 } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Sidebar Component
+interface SideMenuBarProps {
+  isVisible: boolean;
+  onClose: () => void;
+  activeItem: string;
+  setActiveItem: (item: string) => void;
+}
+
+const SideMenuBar: React.FC<SideMenuBarProps> = ({ isVisible, onClose, activeItem, setActiveItem }) => {
+  const menuItems = [
+    { icon: User, label: 'Profile', id: 'profile' },
+    { icon: UserCheck, label: 'Doctors', id: 'doctors' },
+    { icon: Settings, label: 'Settings', id: 'settings' },
+    { icon: Info, label: 'About Us', id: 'about' },
+    { icon: Phone, label: 'Emergency Contacts', id: 'emergency' }
+  ];
+
+  return (
+    <Modal
+      visible={isVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <TouchableOpacity style={styles.modalBackdrop} onPress={onClose} />
+        
+        <View style={styles.sidebar}>
+          {/* Header */}
+          <View style={styles.sidebarHeader}>
+            <Text style={styles.sidebarTitle}>Medical Portal</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <X color="#FFFFFF" size={24} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Menu Items */}
+          <ScrollView style={styles.sidebarMenu}>
+            {menuItems.map((item) => {
+              const IconComponent = item.icon;
+              const isActive = activeItem === item.id;
+              
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.menuItem,
+                    isActive && styles.menuItemActive
+                  ]}
+                  onPress={() => {
+                    setActiveItem(item.id);
+                    // Handle navigation here
+                    console.log(`Navigate to ${item.label}`);
+                  }}
+                >
+                  <IconComponent 
+                    color={isActive ? "#FFFFFF" : "#FFFFFF"} 
+                    size={20} 
+                    style={styles.menuIcon}
+                  />
+                  <Text style={[
+                    styles.menuItemText,
+                    isActive && styles.menuItemTextActive
+                  ]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={styles.sidebarFooter}>
+            <Text style={styles.footerText}>© 2025 Medical Portal</Text>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const router = useRouter();
 const handleSOSPress = () => {
-  router.push('/(patient)/sos');
+  router.push('/sos');
 };
 
 interface Prescription {
@@ -168,6 +259,8 @@ export default function PrescriptionsScreen() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [activeMenuItem, setActiveMenuItem] = useState('profile');
 
   const fetchPrescriptions = async () => {
     if (!user) return;
@@ -239,6 +332,12 @@ export default function PrescriptionsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => setSidebarVisible(true)}
+          >
+            <Menu color="#111827" size={24} />
+          </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Common Prescriptions</Text>
             <Text style={styles.headerSubtitle}>Quick access templates</Text>
@@ -266,6 +365,13 @@ export default function PrescriptionsScreen() {
             <Text style={styles.templateMedicines}>Amlodipine 5mg, Losartan 50mg</Text>
           </View>
         </ScrollView>
+
+        <SideMenuBar 
+          isVisible={sidebarVisible}
+          onClose={() => setSidebarVisible(false)}
+          activeItem={activeMenuItem}
+          setActiveItem={setActiveMenuItem}
+        />
       </SafeAreaView>
     );
   }
@@ -274,6 +380,12 @@ export default function PrescriptionsScreen() {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#059669" />
+        <SideMenuBar 
+          isVisible={sidebarVisible}
+          onClose={() => setSidebarVisible(false)}
+          activeItem={activeMenuItem}
+          setActiveItem={setActiveMenuItem}
+        />
       </SafeAreaView>
     );
   }
@@ -293,9 +405,17 @@ export default function PrescriptionsScreen() {
             <ArrowLeft color="#111827" size={24} />
           </TouchableOpacity>
           <Text style={styles.detailHeaderTitle}>{selectedSpecialty}</Text>
-          <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
-            <AlertTriangle color="#FFFFFF" size={20} />
-          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => setSidebarVisible(true)}
+            >
+              <Menu color="#111827" size={24} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
+              <AlertTriangle color="#FFFFFF" size={20} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -353,6 +473,13 @@ export default function PrescriptionsScreen() {
             </View>
           ))}
         </ScrollView>
+
+        <SideMenuBar 
+          isVisible={sidebarVisible}
+          onClose={() => setSidebarVisible(false)}
+          activeItem={activeMenuItem}
+          setActiveItem={setActiveMenuItem}
+        />
       </SafeAreaView>
     );
   }
@@ -361,8 +488,11 @@ export default function PrescriptionsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.gridHeader}>
-        <TouchableOpacity style={styles.backButton}>
-          <ArrowLeft color="#111827" size={24} />
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => setSidebarVisible(true)}
+        >
+          <Menu color="#111827" size={24} />
         </TouchableOpacity>
         <Text style={styles.gridHeaderTitle}>My Prescriptions</Text>
         <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
@@ -393,6 +523,13 @@ export default function PrescriptionsScreen() {
           })}
         </View>
       </ScrollView>
+
+      <SideMenuBar 
+        isVisible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        activeItem={activeMenuItem}
+        setActiveItem={setActiveMenuItem}
+      />
     </SafeAreaView>
   );
 }
@@ -403,7 +540,93 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   
-  // Grid Header Styles (similar to "Find Your Doctor")
+  // Sidebar Styles
+  modalOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  sidebar: {
+    width: screenWidth * 0.8,
+    maxWidth: 280,
+    backgroundColor: 'transparent',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  sidebarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingTop: 50, // Account for status bar
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    // Apply gradient background
+    backgroundColor: '#00B3FF',
+  },
+  sidebarTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  sidebarMenu: {
+    flex: 1,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    // Continue gradient background
+    backgroundColor: '#5603BD',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  menuItemActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  menuIcon: {
+    marginRight: 15,
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  menuItemTextActive: {
+    color: '#FFFFFF',
+  },
+  sidebarFooter: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#5603BD',
+  },
+  footerText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+  },
+  
+  // Menu Button
+  menuButton: {
+    padding: 8,
+  },
+  
+  // Grid Header Styles (updated to include menu button)
   gridHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -420,7 +643,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
   },
-
+  
+  // Header Right (for detail view)
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   
   // Grid Content Styles
   gridContent: {
@@ -448,7 +677,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
-
   specialtyGridLabel: {
     fontSize: 14,
     fontWeight: '500',
@@ -477,6 +705,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 10,
   },
   
   // Original styles for other components
